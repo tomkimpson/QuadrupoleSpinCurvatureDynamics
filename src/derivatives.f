@@ -33,7 +33,7 @@ SVector = y(9:12)
 
 !Calculate the metric components
 call calculate_covariant_metric(y(2), y(3), metric)
-call calculate_contravariant_metric(y(2), y(3), metricCONTRA)
+call calculate_contravariant_metric(y(2), y(3),metric, metricCONTRA)
 
 
 !Do some checks here

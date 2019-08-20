@@ -20,7 +20,7 @@ real(kind=dp), parameter :: convert_spin= light_c/(Newton_g*(MBH*Msolar)**2.0_dp
 
 
 
-
+character(len=200) :: PathOut
 
 
 

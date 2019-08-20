@@ -30,6 +30,12 @@ ra = semi_latus/(1.0_dp - eccentricity)
 rp = semi_latus/(1.0_dp + eccentricity)
 
 
+
+
+call get_environment_variable("QuadDir", PathOut)
+
+
+
 end subroutine setup
 
 

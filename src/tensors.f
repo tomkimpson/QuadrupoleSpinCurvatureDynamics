@@ -6,12 +6,13 @@ use constants
 implicit none
 
 
-private
+private calculate_perturbations
 
 
 public calculate_spintensor,calculate_riemann, calculate_christoffel, &
-       calculate_covariant_metric,calculate_contravariant_metric, magnitude, &
-       calculate_FourVelocity, calculate_FourMom, calculate_FourSpin
+       calculate_covariant_metric_kerr,calculate_contravariant_metric_kerr, magnitude, &
+       calculate_FourVelocity, calculate_FourMom, calculate_FourSpin, &
+       calculate_covariant_metric, calculate_contravariant_metric
 
 contains
 
@@ -45,7 +46,94 @@ end subroutine magnitude
 
 
 
-subroutine calculate_contravariant_metric(r,theta,metric)
+
+
+subroutine calculate_perturbations(r,theta,metric)
+!Arguments
+real(kind=dp), intent(IN) :: r, theta
+real(kind=dp), intent(out), dimension(4,4) :: metric
+!Other
+real(kind=dp) :: F1, F2, AA,BB
+
+
+F1 = 1.0_dp
+F2 = 1.0_dp!Tod
+
+AA = 1 - 2.0_dp/r
+BB = 1.0_dp - 3.0_dp*cos(theta)**2
+
+metric(1,1) = BB*F1/AA
+metric(2,2) = BB*F2*AA
+metric(3,3) = -BB*F2/r**2
+metric(4,4) = -BB*F2/(r**2 * sin(theta)**2)
+
+
+
+
+end subroutine calculate_perturbations
+
+
+
+
+subroutine calculate_covariant_metric(r,theta,metric)
+!Arguments
+real(kind=dp), intent(IN) :: r, theta
+real(kind=dp), intent(out), dimension(4,4) :: metric
+!Other
+real(kind=dp), dimension(4,4) :: metric_k, perts
+real(kind=dp) :: h11,h22,h33,h30
+
+call calculate_perturbations(r,theta,perts)
+
+call calculate_covariant_metric_kerr(r,theta,metric_k)
+
+
+
+
+metric = 0.0_dp
+metric(1,1) = metric_k(1,1) + epsQ*(metric_k(1,1)**2 *perts(1,1) + metric_k(1,4)**2 * perts(4,4) )
+metric(2,2) = metric_k(2,2) + epsQ*(metric_k(2,2)**2 *perts(2,2))
+metric(3,3) = metric_k(3,3) + epsQ*(metric_k(3,3)**2 *perts(3,3))
+metric(4,4) = metric_k(4,4) + epsQ*(metric_k(4,4)**2 * perts(4,4) + metric_k(1,4)**2 * perts(1,1))
+
+metric(4,1) = metric_k(4,1) + epsQ*(metric_k(4,1)*(metric_k(1,1)*perts(1,1) + metric_k(4,4)*perts(4,4)))
+metric(1,4) = metric(4,1)
+
+
+
+
+
+end subroutine calculate_covariant_metric
+
+
+subroutine calculate_contravariant_metric(r,theta,covariant,metric)
+!Arguments
+real(kind=dp), intent(IN) :: r, theta
+real(kind=dp), intent(IN), dimension(4,4) :: covariant
+real(kind=dp), intent(out), dimension(4,4) :: metric
+!Other
+real(kind=dp) :: gbar
+
+
+gbar = covariant(1,1)*covariant(4,4) - covariant(1,4)**2
+metric = 0.0_dp
+
+metric(1,1) = covariant(4,4)/gbar
+metric(2,2) = 1.0_dp / covariant(2,2)
+metric(3,3) = 1.0_dp / covariant(3,3)
+metric(4,4) = covariant(1,1)/gbar
+metric(1,4) = covariant(1,4)/gbar
+metric(4,1) = metric(1,4)
+
+
+
+
+end subroutine calculate_contravariant_metric
+
+
+
+
+subroutine calculate_contravariant_metric_kerr(r,theta,metric)
 !Arguments
 real(kind=dp), intent(IN) :: r, theta
 real(kind=dp), intent(out), dimension(4,4) :: metric
@@ -83,10 +171,10 @@ metric(4,2) = 0.0_dp
 metric(4,3) = 0.0_dp
 
 
-end subroutine calculate_contravariant_metric
+end subroutine calculate_contravariant_metric_kerr
 
 
-subroutine calculate_covariant_metric(r,theta,metric)
+subroutine calculate_covariant_metric_kerr(r,theta,metric)
 !Arguments
 real(kind=dp), intent(IN) :: r, theta
 real(kind=dp), intent(out), dimension(4,4) :: metric
@@ -126,7 +214,7 @@ metric(4,2) = 0.0_dp
 metric(4,3) = 0.0_dp
 
 
-end subroutine calculate_covariant_metric
+end subroutine calculate_covariant_metric_kerr
 
 
 
@@ -134,60 +222,72 @@ SUBROUTINE calculate_christoffel(r,theta)
 !Arguments
 real(kind=dp), intent(in) :: r,theta
 !Other
-real(kind=dp) :: Sg, Dl
 
 
-Sg = r**2+a**2*cos(theta)**2  
-Dl = r**2 + a**2 - 2.0_dp*r
-
-G0_00 = 0.0_dp
-G0_01 = (r**2+a**2)*(r**2-a**2*cos(theta)**2)/(Sg**2*Dl)
-G0_02 = -2.0_dp*r*a**2*sin(theta)*cos(theta)/Sg**2
-G0_03 = 0.0_dp
-G0_11 = 0.0_dp
-G0_12 = 0.0_dp
-G0_13 = -a*((3.0_dp*r**2-a**2)*(r**2+a**2)-a**2*(r**2-a**2)*sin(theta)**2)        &
-*sin(theta)**2/(Sg**2*Dl)
-G0_22 = 0.0_dp
-G0_23 = 2.0_dp*r*a**3*sin(theta)**3*cos(theta)/Sg**2
-G0_33 = 0.0_dp
-
-G1_00 = Dl*(r**2-a**2*cos(theta)**2)/Sg**3
-G1_01 = 0.0_dp
-G1_02 = 0.0_dp
-G1_03 = -a*Dl*(r**2-a**2*cos(theta)**2)*sin(theta)**2/Sg**3
-G1_11 = (-(r**2-a**2)+a**2*sin(theta)**2*(r-1.0_dp))/(Sg*Dl)
-G1_12 = -a**2*sin(theta)*cos(theta)/Sg
-G1_13 = 0.0_dp
-G1_22 = -r*Dl/Sg
-G1_23 = 0.0_dp
-G1_33 = -(r*(a**2+r**2)**2-a**2*sin(theta)**2*(-a**2*sin(theta)**2*(r-1.0_dp)            &
--1.0_dp*a**2+r*(2.0_dp*(r**2+a**2)+r)))*Dl*sin(theta)**2/Sg**3
-
-G2_00 = -2.0_dp*r*a**2*sin(theta)*cos(theta)/Sg**3
-G2_01 = 0.0_dp
-G2_02 = 0.0_dp
-G2_03 = 2.0_dp*r*a*(r**2+a**2)*sin(theta)*cos(theta)/Sg**3
-G2_11 = a**2*sin(theta)*cos(theta)/(Sg*Dl)
-G2_12 = r/Sg
-G2_13 = 0.0_dp
-G2_22 = -a**2*sin(theta)*cos(theta)/Sg
-G2_23 = 0.0_dp
-G2_33 = -((r**2+a**2)**3-a**2*Dl*(2.0_dp*(r**2+a**2)-a**2*sin(theta)**2)*sin(theta)**2) &
-*sin(theta)*cos(theta)/Sg**3
-
-G3_00 = 0.0_dp
-G3_01 = a*(r**2-a**2*cos(theta)**2)/(Sg**2*Dl)
-G3_02 = -2.0_dp*r*a*(cos(theta)/sin(theta))/Sg**2
-G3_03 = 0.0_dp
-G3_11 = 0.0_dp
-G3_12 = 0.0_dp
-G3_13 = (r*Dl*(r**2+a**2)+a**4*(r-1.0_dp)*sin(theta)**4-a**2*(a**2+r**2)*(2.0_dp*r-1.0_dp)*sin(theta)**2) &
-/(Sg**2*Dl)
-G3_22 = 0.0_dp
-G3_23 = ((r**2+a**2)**2+sin(theta)**4*a**4-2.0_dp*a**2*(r**2-1.0_dp*r+a**2)*sin(theta)**2)*(cos(theta)/sin(theta))/Sg**2 
-G3_33 = 0.0_dp
-
+G0_00=0
+G0_01=(((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(gCrossdr + epsQ*gCrossdr*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dr*h00 + g00K*h00dr + g33dr*h33 + g33K*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00dr + epsQ*(2*g00dr*g00K*h00 + g00K**2*h00dr + 2*gCrossdr*gCrossK*h33 + gCrossK**2*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G0_02=(((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(gCrossdt + epsQ*gCrossdt*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dt*h00 + g00K*h00dt + g33dt*h33 + g33K*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00dt + epsQ*(2*g00dt*g00K*h00 + g00K**2*h00dt + 2*gCrossdt*gCrossK*h33 + gCrossK**2*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G0_03=0
+G0_10=(((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(gCrossdr + epsQ*gCrossdr*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dr*h00 + g00K*h00dr + g33dr*h33 + g33K*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00dr + epsQ*(2*g00dr*g00K*h00 + g00K**2*h00dr + 2*gCrossdr*gCrossK*h33 + gCrossK**2*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G0_11=0
+G0_12=0
+G0_13=(((g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(gCrossdr + epsQ*gCrossdr*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dr*h00 + g00K*h00dr + g33dr*h33 + g33K*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(g33dr + epsQ*(2*gCrossdr*gCrossK + h00dr + 2*g33dr*g33K*h33 + g33K**2*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G0_20=(((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(gCrossdt + epsQ*gCrossdt*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dt*h00 + g00K*h00dt + g33dt*h33 + g33K*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00dt + epsQ*(2*g00dt*g00K*h00 + g00K**2*h00dt + 2*gCrossdt*gCrossK*h33 + gCrossK**2*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G0_21=0
+G0_22=0
+G0_23=(((g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(gCrossdt + epsQ*gCrossdt*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dt*h00 + g00K*h00dt + g33dt*h33 + g33K*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(g33dt + epsQ*(2*gCrossdt*gCrossK + h00dt + 2*g33dt*g33K*h33 + g33K**2*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G0_30=0
+G0_31=(((g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(gCrossdr + epsQ*gCrossdr*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dr*h00 + g00K*h00dr + g33dr*h33 + g33K*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(g33dr + epsQ*(2*gCrossdr*gCrossK + h00dr + 2*g33dr*g33K*h33 + g33K**2*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G0_32=(((g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(gCrossdt + epsQ*gCrossdt*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dt*h00 + g00K*h00dt + g33dt*h33 + g33K*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(g33dt + epsQ*(2*gCrossdt*gCrossK + h00dt + 2*g33dt*g33K*h33 + g33K**2*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G0_33=0
+G1_00=(-g00dr - epsQ*(2*g00dr*g00K*h00 + g00K**2*h00dr + 2*gCrossdr*gCrossK*h33 + gCrossK**2*h33dr))/(2.*(g11K + epsQ*g11K**2*h11))
+G1_01=0
+G1_02=0
+G1_03=(-gCrossdr - epsQ*gCrossdr*(g00K*h00 + g33K*h33) - epsQ*gCrossK*(g00dr*h00 + g00K*h00dr + g33dr*h33 + g33K*h33dr))/(2.*(g11K + epsQ*g11K**2*h11))
+G1_10=0
+G1_11=(g11dr + 2*epsQ*g11dr*g11K*h11 + epsQ*g11K**2*h11dr)/(2.*(g11K + epsQ*g11K**2*h11))
+G1_12=(g11dt + 2*epsQ*g11dt*g11K*h11 + epsQ*g11K**2*h11dt)/(2.*(g11K + epsQ*g11K**2*h11))
+G1_13=0
+G1_20=0
+G1_21=(g11dt + 2*epsQ*g11dt*g11K*h11 + epsQ*g11K**2*h11dt)/(2.*(g11K + epsQ*g11K**2*h11))
+G1_22=(-g22dr - 2*epsQ*g22dr*g22K*h22 - epsQ*g22K**2*h22dr)/(2.*(g11K + epsQ*g11K**2*h11))
+G1_23=0
+G1_30=(-gCrossdr - epsQ*gCrossdr*(g00K*h00 + g33K*h33) - epsQ*gCrossK*(g00dr*h00 + g00K*h00dr + g33dr*h33 + g33K*h33dr))/(2.*(g11K + epsQ*g11K**2*h11))
+G1_31=0
+G1_32=0
+G1_33=(-g33dr - epsQ*(2*gCrossdr*gCrossK + h00dr + 2*g33dr*g33K*h33 + g33K**2*h33dr))/(2.*(g11K + epsQ*g11K**2*h11))
+G2_00=(-g00dt - epsQ*(2*g00dt*g00K*h00 + g00K**2*h00dt + 2*gCrossdt*gCrossK*h33 + gCrossK**2*h33dt))/(2.*(g22K + epsQ*g22K**2*h22))
+G2_01=0
+G2_02=0
+G2_03=(-gCrossdt - epsQ*gCrossdt*(g00K*h00 + g33K*h33) - epsQ*gCrossK*(g00dt*h00 + g00K*h00dt + g33dt*h33 + g33K*h33dt))/(2.*(g22K + epsQ*g22K**2*h22))
+G2_10=0
+G2_11=(-g11dt - 2*epsQ*g11dt*g11K*h11 - epsQ*g11K**2*h11dt)/(2.*(g22K + epsQ*g22K**2*h22))
+G2_12=(g22dr + 2*epsQ*g22dr*g22K*h22 + epsQ*g22K**2*h22dr)/(2.*(g22K + epsQ*g22K**2*h22))
+G2_13=0
+G2_20=0
+G2_21=(g22dr + 2*epsQ*g22dr*g22K*h22 + epsQ*g22K**2*h22dr)/(2.*(g22K + epsQ*g22K**2*h22))
+G2_22=(g22dt + 2*epsQ*g22dt*g22K*h22 + epsQ*g22K**2*h22dt)/(2.*(g22K + epsQ*g22K**2*h22))
+G2_23=0
+G2_30=(-gCrossdt - epsQ*gCrossdt*(g00K*h00 + g33K*h33) - epsQ*gCrossK*(g00dt*h00 + g00K*h00dt + g33dt*h33 + g33K*h33dt))/(2.*(g22K + epsQ*g22K**2*h22))
+G2_31=0
+G2_32=0
+G2_33=(-g33dt - epsQ*(2*gCrossdt*gCrossK + h00dt + 2*g33dt*g33K*h33 + g33K**2*h33dt))/(2.*(g22K + epsQ*g22K**2*h22))
+G3_00=0
+G3_01=(((g11K + epsQ*g11K**2*h11)*(gCrossdr + epsQ*gCrossdr*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dr*h00 + g00K*h00dr + g33dr*h33 + g33K*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(g00dr + epsQ*(2*g00dr*g00K*h00 + g00K**2*h00dr + 2*gCrossdr*gCrossK*h33 + gCrossK**2*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G3_02=(((g11K + epsQ*g11K**2*h11)*(gCrossdt + epsQ*gCrossdt*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dt*h00 + g00K*h00dt + g33dt*h33 + g33K*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(g00dt + epsQ*(2*g00dt*g00K*h00 + g00K**2*h00dt + 2*gCrossdt*gCrossK*h33 + gCrossK**2*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G3_03=0
+G3_10=(((g11K + epsQ*g11K**2*h11)*(gCrossdr + epsQ*gCrossdr*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dr*h00 + g00K*h00dr + g33dr*h33 + g33K*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(g00dr + epsQ*(2*g00dr*g00K*h00 + g00K**2*h00dr + 2*gCrossdr*gCrossK*h33 + gCrossK**2*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G3_11=0
+G3_12=0
+G3_13=(((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(gCrossdr + epsQ*gCrossdr*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dr*h00 + g00K*h00dr + g33dr*h33 + g33K*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((g11K + epsQ*g11K**2*h11)*(g33dr + epsQ*(2*gCrossdr*gCrossK + h00dr + 2*g33dr*g33K*h33 + g33K**2*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G3_20=(((g11K + epsQ*g11K**2*h11)*(gCrossdt + epsQ*gCrossdt*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dt*h00 + g00K*h00dt + g33dt*h33 + g33K*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(g00dt + epsQ*(2*g00dt*g00K*h00 + g00K**2*h00dt + 2*gCrossdt*gCrossK*h33 + gCrossK**2*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G3_21=0
+G3_22=0
+G3_23=(((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(gCrossdt + epsQ*gCrossdt*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dt*h00 + g00K*h00dt + g33dt*h33 + g33K*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((g11K + epsQ*g11K**2*h11)*(g33dt + epsQ*(2*gCrossdt*gCrossK + h00dt + 2*g33dt*g33K*h33 + g33K**2*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G3_30=0
+G3_31=(((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(gCrossdr + epsQ*gCrossdr*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dr*h00 + g00K*h00dr + g33dr*h33 + g33K*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((g11K + epsQ*g11K**2*h11)*(g33dr + epsQ*(2*gCrossdr*gCrossK + h00dr + 2*g33dr*g33K*h33 + g33K**2*h33dr)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G3_32=(((gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))*(gCrossdt + epsQ*gCrossdt*(g00K*h00 + g33K*h33) + epsQ*gCrossK*(g00dt*h00 + g00K*h00dt + g33dt*h33 + g33K*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))) + ((g11K + epsQ*g11K**2*h11)*(g33dt + epsQ*(2*gCrossdt*gCrossK + h00dt + 2*g33dt*g33K*h33 + g33K**2*h33dt)))/(-(gCrossK + epsQ*gCrossK*(g00K*h00 + g33K*h33))**2 + (g33K + epsQ*(gCrossK**2 + h00 + g33K**2*h33))*(g00K + epsQ*(g00K**2*h00 + gCrossK**2*h33))))/2.
+G3_33=0
 
 
 
