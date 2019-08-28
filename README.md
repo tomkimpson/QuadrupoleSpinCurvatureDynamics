@@ -43,6 +43,11 @@ to compile and run the code. Once you have checked that everything is running OK
 
 If making edits to the code, try to keep to the [FORTRAN Style Guide](https://www.fortran90.org/src/best-practices.html)
 
+### Structure
+
+* `Mathematica/` contains the code used for constructing the Christoffel/Riemann tensors for the metric
+
+
 
 **WORK TO THIS REPO IS ONGOING AND SHOULD NOT CURRENTLY BE USED FOR PURPOSE**
 
