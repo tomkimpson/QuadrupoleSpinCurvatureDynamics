@@ -31,16 +31,19 @@ PVector = y(5:8)
 SVector = y(9:12)
 
 
+
+!Derivatives of the metric and perturbations
+
+
 !Calculate the metric components
-call calculate_covariant_metric(y(2), y(3), metric)
-call calculate_contravariant_metric(y(2), y(3),metric, metricCONTRA)
+call calculate_covariant_metric(y(2),y(3),metric)
+call calculate_contravariant_metric(metric, metricCONTRA)
 
-
-!Do some checks here
 
 !Calculate Christoffel symbols - these are saved globally
-
 call calculate_christoffel(y(2), y(3))
+print *, G3_33
+stop
 
 !Calculate Riemann tensor - components are saved globally
 
