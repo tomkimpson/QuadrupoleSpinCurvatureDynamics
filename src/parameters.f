@@ -11,7 +11,7 @@ integer, parameter :: dp = selected_real_kind(33,4931)
 
 
 !The semi-major axis of the orbit can be defined either directly, or related to the period via Keplers 3rd
-real(kind=dp), parameter :: epsQ = 0.10_dp
+real(kind=dp), parameter :: epsQ = 0.00_dp
 real(kind=dp), parameter :: KeplerianPeriod = 0.0_dp
 real(kind=dp), parameter :: r_set = 50.0_dp !Set the sma. Only used if KepPer eq 0
 

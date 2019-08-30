@@ -42,8 +42,6 @@ call calculate_contravariant_metric(metric, metricCONTRA)
 
 !Calculate Christoffel symbols - these are saved globally
 call calculate_christoffel(y(2), y(3))
-print *, G3_33
-stop
 
 !Calculate Riemann tensor - components are saved globally
 

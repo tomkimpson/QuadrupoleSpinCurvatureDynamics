@@ -12,7 +12,7 @@ import os
 
 
 
-d = 3
+d = 2
 
 
 #Set up plotting environment
@@ -29,32 +29,42 @@ elif  (d == 2):
 #Load data
 
 path = os.environ['QuadDir']
-data = np.loadtxt(path + 'Plot_data.txt')
 
-t = data[:,0]
-x = data[:,1]
-y = data[:,2]
-z = data[:,3]
-
-
-
-#Plot it
-
-
-if (d == 3):
-    ax1.plot(x,y,z)  
-    limit = max(max(x),max(y),max(z))
-    ax1.set_xlim(-limit,+limit)
-    ax1.set_ylim(-limit,+limit)
-    ax1.set_zlim(-limit,+limit)
-
-if (d == 2):
-    ax1.plot(x,y)
-    ax2.plot(x,z)
+alldata = glob.glob(path+'*.txt')
 
 
 
 
+
+def plotter(datafile):
+
+   
+    data = np.loadtxt(datafile)
+    t = data[:,0]
+    x = data[:,1]
+    y = data[:,2]
+    z = data[:,3]
+    
+    
+    
+    #Plot it
+    
+    
+    if (d == 3):
+        ax1.plot(x,y,z)  
+        limit = max(max(x),max(y),max(z))
+        ax1.set_xlim(-limit,+limit)
+        ax1.set_ylim(-limit,+limit)
+        ax1.set_zlim(-limit,+limit)
+        
+    if (d == 2):
+        ax1.plot(x,y)
+        ax2.plot(x,z)
+    
+
+
+for datafile in alldata:
+    plotter(datafile)
 
 
 plt.rc('text', usetex=True)

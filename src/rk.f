@@ -42,7 +42,7 @@ AllData(i,:) = y
 !Integrate
 !do while (y(1) .LT. 1.0_dp)
 do while ( abs( y(4) - y0(4)) .LT. N_orbit*2.0_dp*PI)    
-print *,  abs( y(4) - y0(4)) .LT. N_orbit*2.0_dp*PI
+print *,  abs( y(4) - y0(4)),  N_orbit*2.0_dp*PI
     call RKF(y,y1)
     y = y1
     
