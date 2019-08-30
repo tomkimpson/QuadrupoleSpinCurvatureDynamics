@@ -29,7 +29,8 @@ real(kind=dp), parameter :: lambda = 1.0_dp !Turn on/off spin-curvature coupling
 integer(kind=dp), parameter :: plot = 1 !Turn on/off saving a formatted file for plotting with e.g. python
 
 
-
+!Effective variables
+real(kind=dp) :: a !BH spin parameter
 
 
 
