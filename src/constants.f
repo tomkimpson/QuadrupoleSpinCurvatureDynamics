@@ -65,6 +65,7 @@ real(kind=dp), parameter :: m0 = MPSR/MBH !Mass ratio
 integer(kind=dp), parameter :: entries = 12 !Number of differetnai eqns 4x(position,spin,momentum)
 real(kind=dp), parameter :: FinalPhi = 2.0_dp*PI*N_orbit !The final phi after all the orbits
 
+
 !Integration constants
 real(kind=dp) :: h =1.0d-1 !Initial stepsize. This will be varied by RKF so it is not a parameter 
 real(kind=dp), parameter :: escal = 1.0d20
@@ -73,11 +74,14 @@ real(kind=dp), parameter :: Pgrow = -0.20_dp
 real(kind=dp), parameter :: Pshrink = -0.250_dp
 real(kind=dp), parameter :: errcon = (5.0_dp/S)**(1.0_dp/Pgrow)
 integer(kind=dp), parameter :: nrows = 1d6 
-
+integer(kind=dp) :: adaptive = 1 !turn on/off adaptive stepsize. On by default
 
 
 !Savefiles
-character(len=200) :: BinaryData, PlotData !Decalared later - cross compliatin issue from parameter.f
+character(len=200) :: BinaryData, PlotData, Fname
+character(len=200) :: PeriastronData, PeriastronScatter
+
+
 real(kind=dp), parameter :: coarse = 1.0_dp !how much of total data is saved to formatted file 1 = lots, +infty = none
 
 
@@ -103,6 +107,10 @@ real(kind = dp) :: cbar4=13525.0_dp/55296.0_dp, cbar5 = 277.0_dp/14336.0_dp, cba
 
 !Some globally defined parameters which will be calculated later
 
+!For periapsis
+real(kind=dp) :: nx,ny,nz,nmag
+real(kind=dp), dimension(int(N_orbit),3) :: omega_array
+integer(kind=dp) :: i_periapsis
 
 !Unperturbed Kerr
 real(kind=dp) :: g00K, g11K, g22K, g33K, gCrossK

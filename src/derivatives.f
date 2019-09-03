@@ -7,10 +7,10 @@ use tensors
 
 implicit none
 
-private derivs
+private 
 
 
-public RKF
+public RKF, derivs
 
 contains
 
@@ -144,6 +144,8 @@ ratio = deltaErr/yscal
 errmax = escal * maxval(ratio)
 
 
+if (adaptive .EQ. 1) then
+
 if (errmax .GT. 1.0_dp) then
 !This is not good. Do not update yOUT and reduce the stepsize
 call ShrinkStepsize(errmax)
@@ -155,6 +157,20 @@ yOUT = ynew
 endif
 
 
+
+
+else
+
+
+if (errmax .GT. 1.0_dp) then
+print *, 'Error! You have turned off adaptive stepsize by errmax is large (=',errmax, ' )'
+endif
+
+yOUT = ynew
+
+
+
+endif
 
 
 end subroutine RKF

@@ -45,6 +45,26 @@ If making edits to the code, try to keep to the [FORTRAN Style Guide](https://ww
 
 ### Structure
 
+#### src/
+
+* `parameters.f`. Defines all the system parameters which are constant over multiple iterations. Parameters which are changed between runs (e.g. BH spin `a`) are set at the start of `main.f`
+
+* `constants.f`. Calculations with the defined parameters. No changes should be necessary to this file
+
+* `main.f`. The main program from which the code is run and modules are called. Start here.
+
+* `initial_conditions.f`. Sets up the initial conditions c.f. spin, momentum, energy, angular momentum etc.
+
+* `derivatives.f`. Defines what to do at each integration step. Calls the derivates from `tensors.f` and `QuadExpressions.f`
+
+* `rk.f`. Defines the iterative runge-kutta integration and I/O.
+
+* `run.py`. Python wrapper to run + compile
+
+
+
+####Mathemtica/
+
 * `Mathematica/` contains the code used for constructing the Christoffel/Riemann tensors for the metric
 
 
