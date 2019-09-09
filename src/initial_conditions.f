@@ -86,6 +86,16 @@ sigma = r**2.0_dp +a**2.0_dp * cos(theta)
 delta = r**2.0_dp +a**2.0_dp - 2.0_dp*r
 
 
+
+
+
+!Initialization based on thea = pi/2
+
+
+
+
+
+
 PP = E* (r**2.0_dp + a**2.0_dp) - a*L
 RR = PP**2.0_dp -delta*(r**2.0_dp + Q + (L-a*E)**2.0_dp)
 TT = Q - cos(theta)**2.0_dp*(a**2.0_dp * (1.0_dp - E**2.0_dp)+L**2.0_dp/sin(theta)**2.0_dp)

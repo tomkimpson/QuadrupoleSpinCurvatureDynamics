@@ -17,7 +17,7 @@ real(kind=dp), parameter :: r_set = 100.0_dp !Set the sma. Only used if KepPer e
 real(kind=dp), parameter :: circular = 0 !Turn on/off a precessing circular orbit. If on subsequent parameters are ignored
 
 real(kind=dp), parameter :: eccentricity = 0.90_dp !Orbital eccentricity
-real(kind=dp), parameter :: iota = 0.0_dp !Inclination w.r.t equatorial plane in degrees
+real(kind=dp), parameter :: iota = 10.0_dp !Inclination w.r.t equatorial plane in degrees
 real(kind=dp), parameter :: MBH = 4.310d6 !BH mass in solar masses
 real(kind=dp), parameter :: MPSR = 1.40_dp !pulsar mass in solar masses
 real(kind=dp), parameter :: RPSR = 10.0_dp !pulsar radius in km
