@@ -4,43 +4,15 @@ use parameters
 use constants
 
 implicit none
-integer(kind=dp) :: i
-integer(kind=dp) :: num_a !Number of spin entries
-character(len=200) :: Qstr, LAMstr, periname
-num_a = 10
 
 
-epsQ = 0.10_dp
-lambda=1.0_dp
+a = 0.40_dp
 
-write(Qstr,'(F10.2)') epsQ
-write(LAMstr,'(F10.2)') lambda
 
 call get_environment_variable("QuadDir", PathOut)
-periname = 'periastron_Q='//trim(adjustl(Qstr))// &
-         '_L='//trim(adjustl(LAMstr))
-                                          
-print *, trim(adjustl(periname))
-print *, trim(adjustl(PathOut))
-PeriastronData = trim(adjustl(PathOut))//trim(adjustl(periname))//'.txt'
-print *, PeriastronData
 
+call spins()
 
-open(unit=30,file=PeriastronData,status='replace',form='formatted')
-close(30)
-
-
-
-
-
-do i = 1,num_a
-a = real(0.1_dp*i, kind=dp)
-if (a.eq.1.0_dp) then
-a = 0.9980_dp !Set maximum possible spin
-endif
-
-call main_run()
-enddo
 
 print *, 'All completed OK. EXIT'
 
@@ -76,14 +48,29 @@ write(Astr,'(F10.2)') a
 write(Qstr,'(F10.2)') epsQ
 write(LAMstr,'(F10.2)') lambda
 
-Fname = 'data_a='//trim(adjustl(Astr))// &
-         '_Q='//trim(adjustl(Qstr))// &
-         '_L='//trim(adjustl(LAMstr))
+
+if (epsQ .EQ. 0.0_dp .and. lambda .EQ. 0.0_dp) then
+Fname = 'A'
+else if (epsQ .EQ. 0.0_dp .and. lambda .EQ. 1.0_dp) then
+Fname = 'B'
+
+else if (epsQ .NE. 0.0_dp .and. lambda .EQ. 0.0_dp) then
+Fname = 'C'
+
+else if (epsQ .NE. 0.0_dp .and. lambda .EQ. 1.0_dp) then
+Fname = 'D'
+
+!Fname = 'data_a='//trim(adjustl(Astr))// &
+ !        '_Q='//trim(adjustl(Qstr))// &
+  !       '_L='//trim(adjustl(LAMstr))
                                           
+endif
+
 
 BinaryData = trim(adjustl(PathOut))//trim(adjustl(Fname))//'.dat'
-
+print *, Fname
 print *, BinaryData
+
 
 !Calculate the initial E,L,Q from the Keplerian orbital parameters
 
@@ -92,7 +79,7 @@ r_init = r_set
 call calculate_EQL_circular(E,Q,L)
 
 else
-r_init = r_set
+r_init = rp
 call calculate_EQL(E,Q,L)
 endif
 
@@ -125,6 +112,12 @@ Y_init(9:12) = SVector
 
 
 
+
+
+
+print *, Y_init(1:4)
+print *, Y_init(5:8)
+print *, Y_init(9:12)
 !Calculate the vector which points towards the ascending node
 !By constrution, the initial spatial position is at the point of the ascending
 !node
@@ -145,12 +138,15 @@ print *, 'Going in. N = ', nx,ny,nz
 
 call rk(Y_init)
 
+
+
 print *, '-----------------------'
 print *, 'Completed rk solver'
 print *, '-----------------------'
 
 
 
+if (periastron .EQ. 1) then
 
 do i = 1,int(N_orbit)
 print *, omega_array(i,:)
@@ -189,13 +185,41 @@ open(unit=30,file=PeriastronData,action='write', position='append',status='old',
 write(30, *) domega, a,dt
 close(30)
 
+endif
 
 end subroutine main_run
 
 
 
+subroutine spins()
+use parameters
+use constants
+
+implicit none
 
 
+epsQ = 0.0_dp
+lambda=0.0_dp
+call main_run()
+
+
+epsQ = 0.0_dp
+lambda=1.0_dp
+call main_run()
+
+
+
+!epsQ = 0.10_dp
+!lambda=0.0_dp
+!call main_run()
+
+
+
+!epsQ = 0.10_dp
+!lambda=1.0_dp
+!call main_run()
+
+end subroutine spins
 
 
 

@@ -123,22 +123,16 @@ PVector(4) = m0*((L/sin(theta)**2 - a*E) + a*PP/delta)/sigma
 
 
 
-tdot =  E + (2.0_dp*r*(r**2 +a**2)*E -2.0_dp*a*r*L) / (sigma*delta)
+!tdot =  E + (2.0_dp*r*(r**2 +a**2)*E -2.0_dp*a*r*L) / (sigma*delta)
+!thetadot = sqrt ( (Q + (E**2 - 1.0_dp)*a**2*cos(theta)**2 - L**2/tan(theta)**2)/sigma**2 )
+!phidot = (2.0_dp*a*r*E + (sigma - 2.0_dp*r)*L/sin(theta)**2 )/ (sigma*delta)
+!rdot = sqrt(delta*(-1.0_dp + E*tdot - L*phidot - sigma*thetadot**2)/sigma)
+!print *, PVector(1)/m0, tdot
+!print *, PVector(2)/m0, rdot
+!print *, PVector(3)/m0,thetadot
+!print *, PVector(4)/m0,phidot
 
-thetadot = sqrt ( (Q + (E**2 - 1.0_dp)*a**2*cos(theta)**2 - L**2/tan(theta)**2)/sigma**2 )
-
-phidot = (2.0_dp*a*r*E + (sigma - 2.0_dp*r)*L/sin(theta)**2 )/ (sigma*delta)
-
-
-rdot = sqrt(delta*(-1.0_dp + E*tdot - L*phidot - sigma*thetadot**2)/sigma)
-
-
-print *, PVector(1)/m0, tdot
-print *, PVector(2)/m0, rdot
-print *, PVector(3)/m0,thetadot
-print *, PVector(4)/m0,phidot
-
-stop
+!stop
 
 
 

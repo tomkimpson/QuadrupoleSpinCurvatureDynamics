@@ -74,13 +74,12 @@ real(kind=dp), parameter :: Pgrow = -0.20_dp
 real(kind=dp), parameter :: Pshrink = -0.250_dp
 real(kind=dp), parameter :: errcon = (5.0_dp/S)**(1.0_dp/Pgrow)
 integer(kind=dp), parameter :: nrows = 1d6 
-integer(kind=dp) :: adaptive = 1 !turn on/off adaptive stepsize. On by default
 
 
 !Savefiles
 character(len=200) :: BinaryData, PlotData, Fname
 character(len=200) :: PeriastronData, PeriastronScatter
-
+!Save Arrays
 
 real(kind=dp), parameter :: coarse = 1.0_dp !how much of total data is saved to formatted file 1 = lots, +infty = none
 

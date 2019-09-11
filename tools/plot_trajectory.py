@@ -32,7 +32,7 @@ elif  (d == 2):
 
 path = os.environ['QuadDir']
 
-alldata = glob.glob(path+'data*.txt')
+alldata = glob.glob(path+'*.txt')
 scatterdata = glob.glob(path+'scatter*.txt')
 
 

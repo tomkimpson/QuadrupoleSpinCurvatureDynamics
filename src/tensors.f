@@ -119,7 +119,7 @@ metric(1,1) = covariant(4,4)/gbar
 metric(2,2) = 1.0_dp / covariant(2,2)
 metric(3,3) = 1.0_dp / covariant(3,3)
 metric(4,4) = covariant(1,1)/gbar
-metric(1,4) = covariant(1,4)/gbar
+metric(1,4) = -covariant(1,4)/gbar
 metric(4,1) = metric(1,4)
 
 
@@ -160,7 +160,6 @@ real(kind=dp), intent(in) :: r,theta
 
 
 call ChristoffelQuad(r,theta)
-
 
 
 
@@ -388,13 +387,13 @@ Vsq = g00*Xprime(1)**2 + g11*Xprime(2)**2 + g22*Xprime(3)**2 + g33*Xprime(4)**2 
 
 
 
-
-
 PV = -sqrt(-1.0_dp/Vsq)
 
 
 Xprime = Xprime * PV
 
+
+Vsq = g00*Xprime(1)**2 + g11*Xprime(2)**2 + g22*Xprime(3)**2 + g33*Xprime(4)**2 + 2.0_dp*g30*Xprime(1)*Xprime(4)
 
 
 end subroutine calculate_FourVelocity

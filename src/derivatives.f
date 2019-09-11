@@ -95,6 +95,7 @@ real(kind=dp) :: errmax
 
 
 
+11 continue
 ! Y1
 y1 = yIN
 call derivs(y1,dy1)
@@ -150,6 +151,7 @@ if (errmax .GT. 1.0_dp) then
 !This is not good. Do not update yOUT and reduce the stepsize
 call ShrinkStepsize(errmax)
 yOUT = yIN
+goto 11
 else
 !This is good. Update yOUT and try to increase the stepsize a little bit
 call GrowStepsize(errmax)
@@ -164,6 +166,8 @@ else
 
 if (errmax .GT. 1.0_dp) then
 print *, 'Error! You have turned off adaptive stepsize by errmax is large (=',errmax, ' )'
+print *, 'Try again with a smaller stepsize. h = ', h
+Stop
 endif
 
 yOUT = ynew

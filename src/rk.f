@@ -25,13 +25,16 @@ real(kind=dp), dimension(size(y0)) :: y, y1,dy1
 !an array to store all the data. !Should be faster than dynamically allocating
 !However this does require more exploration
 !see https://stackoverflow.com/questions/8384406/how-to-increase-array-size-on-the-fly-in-fortran
-real(kind=dp), dimension(nrows,size(y0)) :: AllData !Big array to save all data
+real(kind=dp), dimension(nrows,size(y0)+1) :: AllData !Big array to save all data
 real(kind=dp), dimension(:,:),allocatable :: output !smaller array which will be outout
 integer(kind=dp) :: i,j !index for saving to array
 real(kind=dp) :: mm, xC, yC, zC !Cartesian components
 real(kind=dp) :: dr, dr1,tau,tau1
-
 character(len=200) :: ScatterName, astr
+real(kind=dp), dimension(:), allocatable :: Sx, Sy, Sz,S1,S2,S3, &
+                                           thetaSL, phiSL,r,theta,phi
+
+
 
 if (periastron .EQ. 1) then
 
@@ -52,8 +55,12 @@ y  = y0
 
 !Save the first row to array
 i = 1
-AllData(i,:) = y
 tau = 0.0_dp
+AllData(i,1:entries) = y
+AllData(i,entries+1) = tau
+
+print *, 'START'
+print *, i, AllData(i,1:3)
 
 
 !Get initial sign of rdot. This will be used for assessing when a periastron
@@ -67,12 +74,17 @@ dr = sign(1.0_dp,dy1(2))
 !Integrate for just a bit more than num orbits
 do while ( abs( y(4) - y0(4)) .LT. 1.10_dp*N_orbit*2.0_dp*PI)    
     tau1 = tau + h
+    
     call RKF(y,y1)
     !print *,  abs( y(4) - y0(4)),  N_orbit*2.0_dp*PI, y1(2)
-
+    
     !Save the output
     i = i + 1
-    AllData(i,:) = y1
+    AllData(i,1:entries) = y1
+    AllData(i,entries+1) = tau1
+ !   print *, i, AllData(i,1:3)
+!
+
 
 
     !print *, y1(2), h, dr
@@ -112,8 +124,52 @@ print *, 'Runge Kutta completed. Start data I/O'
 
 
 !First reallocate to create a smaller array
-allocate(output(i,entries))
+allocate(output(i,entries+1))
 output = AllData(1:i, :)
+
+!do j = 1,4
+!print *, j, AllData(j,1:3)
+!enddo
+!print *, 'end'
+
+
+
+!Calculate spin behaviours
+allocate(S1(i))
+allocate(S2(i))
+allocate(S3(i))
+allocate(Sx(i))
+allocate(Sy(i))
+allocate(Sz(i))
+allocate(r(i))
+allocate(theta(i))
+allocate(phi(i))
+
+
+allocate(thetaSL(i))
+allocate(phiSL(i))
+
+
+r = output(:,2)
+phi = output(:,3)
+theta = output(:,4)
+
+S1 = output(:,10)
+S2 = output(:,11)
+S3 = output(:,12)
+
+Sx = S1*sin(theta)*cos(phi) + S2*r*cos(theta)*cos(phi) - S3*r*sin(theta)*sin(phi)
+Sy = S1*sin(theta)*sin(phi) + S2*r*cos(theta)*sin(phi) + S3*r*sin(theta)*cos(phi)
+Sz = S1*cos(theta) - S2*r*sin(theta)
+
+
+thetaSL = atan2(sqrt(Sx**2 +Sy**2),Sz)
+phiSL = phiSL - phi
+
+
+
+
+
 
 !Now save
 open(unit=10,file=BinaryData,status='replace',form='unformatted')
@@ -134,7 +190,10 @@ if (plot .EQ. 1) then
     xC = mm * sin(output(j,3)) * cos(output(j,4))
     yC = mm * sin(output(j,3)) * sin(output(j,4))
     zC = mm * cos(output(j,3)) 
-    write(20, *) output(j,1), xC, yC, zC
+    write(20, *) output(j,1), xC, yC, zC, &
+                output(j,4), thetaSL(j), phiSL(j), &
+                Sx(j), Sy(j), Sz(j), convert_s, &
+                output(j,entries+1)
     endif
     enddo
     close(20)
