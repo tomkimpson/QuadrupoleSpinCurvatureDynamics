@@ -7,10 +7,10 @@ use tensors
 
 implicit none
 
-private 
+private derivs
 
 
-public RKF, derivs
+public RKF
 
 contains
 
@@ -31,16 +31,15 @@ PVector = y(5:8)
 SVector = y(9:12)
 
 
-
-!Derivatives of the metric and perturbations
-
-
 !Calculate the metric components
-call calculate_covariant_metric(y(2),y(3),metric)
-call calculate_contravariant_metric(metric, metricCONTRA)
+call calculate_covariant_metric(y(2), y(3), metric)
+call calculate_contravariant_metric(y(2), y(3), metricCONTRA)
 
+
+!Do some checks here
 
 !Calculate Christoffel symbols - these are saved globally
+
 call calculate_christoffel(y(2), y(3))
 
 !Calculate Riemann tensor - components are saved globally
@@ -94,8 +93,8 @@ real(kind=dp) :: errmax
 
 
 
-
 11 continue
+
 ! Y1
 y1 = yIN
 call derivs(y1,dy1)
@@ -145,8 +144,6 @@ ratio = deltaErr/yscal
 errmax = escal * maxval(ratio)
 
 
-if (adaptive .EQ. 1) then
-
 if (errmax .GT. 1.0_dp) then
 !This is not good. Do not update yOUT and reduce the stepsize
 call ShrinkStepsize(errmax)
@@ -159,22 +156,6 @@ yOUT = ynew
 endif
 
 
-
-
-else
-
-
-if (errmax .GT. 1.0_dp) then
-print *, 'Error! You have turned off adaptive stepsize by errmax is large (=',errmax, ' )'
-print *, 'Try again with a smaller stepsize. h = ', h
-Stop
-endif
-
-yOUT = ynew
-
-
-
-endif
 
 
 end subroutine RKF

@@ -2,17 +2,17 @@ module tensors
 
 use parameters
 use constants
-use quadrupole_expressions
+
 implicit none
 
 
-private calculate_covariant_metric_kerr, calculate_perturbations
+private
 
 
 public calculate_spintensor,calculate_riemann, calculate_christoffel, &
-       magnitude, &
+       calculate_covariant_metric,calculate_contravariant_metric, magnitude, &
        calculate_FourVelocity, calculate_FourMom, calculate_FourSpin, &
-       calculate_covariant_metric, calculate_contravariant_metric
+       calculate_covariant_metric_kerr, calculate_contravariant_metric_kerr
 
 contains
 
@@ -27,7 +27,7 @@ real(kind=dp), intent(out) :: mag
 
 
 mag = metric(1,1)*vector(1)**2.0_dp + metric(2,2)*vector(2)**2.0_dp + metric(3,3)*vector(3)**2.0_dp+metric(4,4)*vector(4)**2.0_dp&
-      +2.0_dp*(metric(1,2)*vector(1)*vector(2) + &
+      +2.0_dp*(metric(1,2)*vector(1)*vector(2) + & 
                metric(1,3)*vector(1)*vector(3) + &
                metric(1,4)*vector(1)*vector(4) + &
                metric(2,3)*vector(2)*vector(3) + &
@@ -43,97 +43,78 @@ end subroutine magnitude
 
 
 
-subroutine calculate_perturbations(r,theta)
+
+subroutine calculate_contravariant_metric(r,theta,metric)
 !Arguments
 real(kind=dp), intent(IN) :: r, theta
-!Other
-real(kind=dp) :: F1, F2, AA,BB
-
-
-
-F1 = -5.0_dp*(r-1.0_dp) * (2.0_dp + 6.0_dp*r - 3.0_dp*r**2)/(8.0_dp*r*(r-2.0_dp)) &
-     -15.0_dp*r*(r-2.0_dp)*log(r/(r-2.0_dp)) / 16.0_dp
-F2 = 5.0_dp*(2.0_dp-3.0_dp*r - 3.0_dp*r**2)/(8.0_dp*r) &
-     +15.0_dp*(r**2 - 2.0_dp) * log(r/(r-2.0_dp)) / 16.0_dp
-
-
-AA = 1 - 2.0_dp/r
-BB = 1.0_dp - 3.0_dp*cos(theta)**2
-
-h00 = BB*F1/AA
-h11 = BB*F2*AA
-h22 = -BB*F2/r**2
-h33 = -BB*F2/(r**2 * sin(theta)**2)
-
-
-end subroutine calculate_perturbations
-
-
-
-
-subroutine calculate_covariant_metric(r,theta,metric)
-!Arguments
-real(kind=dp), intent(in) :: r,theta
 real(kind=dp), intent(out), dimension(4,4) :: metric
-!Other
-real(kind=dp), dimension(4,4) :: metric_k, perts
-real(kind=dp) :: h11,h22,h33,h30
 
-
-!These are saved globally
-call calculate_covariant_metric_kerr(r,theta)
-call calculate_perturbations(r,theta)
-
-
-
-
-
-metric = 0.0_dp
-
-metric(1,1) = g00K + epsQ*(g00K**2 *h00 + gCrossK**2 * h33)
-metric(2,2) = g11K + epsQ*(g11K**2 *h11)
-metric(3,3) = g22K + epsQ*(g22K**2 *h22)
-metric(4,4) = g33K + epsQ*(g33K**2 *h33 + gCrossK**2 * h11)
-
-metric(4,1) = gCrossK + epsQ*(gCrossK*(g00K*h00 + g33K*h33))
-metric(1,4) = metric(4,1)
-
-
-
-
-end subroutine calculate_covariant_metric
-
-
-subroutine calculate_contravariant_metric(covariant,metric)
-!Arguments
-real(kind=dp), intent(IN), dimension(4,4) :: covariant
-real(kind=dp), intent(out), dimension(4,4) :: metric
-!Other
-real(kind=dp) :: gbar
-
-
-gbar = covariant(1,1)*covariant(4,4) - covariant(1,4)**2
-metric = 0.0_dp
-
-metric(1,1) = covariant(4,4)/gbar
-metric(2,2) = 1.0_dp / covariant(2,2)
-metric(3,3) = 1.0_dp / covariant(3,3)
-metric(4,4) = covariant(1,1)/gbar
-metric(1,4) = -covariant(1,4)/gbar
-metric(4,1) = metric(1,4)
-
-
+call calculate_contravariant_metric_kerr(r,theta,metric)
 
 
 end subroutine calculate_contravariant_metric
 
 
-
-
-
-subroutine calculate_covariant_metric_kerr(r,theta)
+subroutine calculate_covariant_metric(r,theta,metric)
 !Arguments
 real(kind=dp), intent(IN) :: r, theta
+real(kind=dp), intent(out), dimension(4,4) :: metric
+
+
+call calculate_covariant_metric_kerr(r,theta,metric)
+
+end subroutine calculate_covariant_metric
+
+
+
+
+subroutine calculate_contravariant_metric_kerr(r,theta,metric)
+!Arguments
+real(kind=dp), intent(IN) :: r, theta
+real(kind=dp), intent(out), dimension(4,4) :: metric
+
+
+!Internals
+real(kind=dp) :: sigma, delta
+
+
+sigma = r**2.0_dp + a**2.0_dp*cos(theta)**2
+delta = r**2.0_dp - 2.0_dp*r + a**2.0_dp
+
+
+metric(1,1) = - ((r**2.0_dp + a**2.0_dp) + 2.0_dp*r*a**2.0_dp*sin(theta)**2.0_dp/sigma)/delta
+metric(2,2) = delta/sigma
+metric(3,3) = 1.0_dp/sigma
+metric(4,4) = (1.0_dp-2.0_dp*r/sigma)/(delta*sin(theta)**2.0_dp)
+
+metric(1,4) = -2.0_dp*r*a/(sigma*delta)
+metric(4,1) = metric(1,4)
+
+!All other terms are zero
+metric(1,2) = 0.0_dp
+metric(1,3) = 0.0_dp
+
+metric(2,1) = 0.0_dp
+metric(2,3) = 0.0_dp
+metric(2,4) = 0.0_dp
+
+metric(3,1) = 0.0_dp
+metric(3,2) = 0.0_dp
+metric(3,4) = 0.0_dp
+
+metric(4,2) = 0.0_dp
+metric(4,3) = 0.0_dp
+
+
+end subroutine calculate_contravariant_metric_kerr
+
+
+subroutine calculate_covariant_metric_kerr(r,theta,metric)
+!Arguments
+real(kind=dp), intent(IN) :: r, theta
+real(kind=dp), intent(out), dimension(4,4) :: metric
+
+
 !Internals
 real(kind=dp) :: sigma, delta
 
@@ -143,11 +124,29 @@ delta = r**2.0_dp - 2.0_dp*r + a**2.0_dp
 
 
 
-g00K = -(1.0_dp-2.0_dp*r/sigma)
-g11K = sigma/delta
-g22K = sigma
-g33K = (r**2.0_dp + a**2.0_dp + 2.0_dp*r*a**2.0_dp*sin(theta)**2.0_dp/sigma)*sin(theta)**2.0_dp
-gCrossK = -2.0_dp*r*a*sin(theta)**2.0_dp/sigma
+metric(1,1) = -(1.0_dp-2.0_dp*r/sigma)
+metric(2,2) = sigma/delta
+metric(3,3) = sigma
+metric(4,4) = (r**2.0_dp + a**2.0_dp + 2.0_dp*r*a**2.0_dp*sin(theta)**2.0_dp/sigma)*sin(theta)**2.0_dp
+
+
+metric(1,4) = -2.0_dp*r*a*sin(theta)**2.0_dp/sigma
+metric(4,1) = metric(1,4)
+
+!All other terms are zero
+metric(1,2) = 0.0_dp
+metric(1,3) = 0.0_dp
+
+metric(2,1) = 0.0_dp
+metric(2,3) = 0.0_dp
+metric(2,4) = 0.0_dp
+
+metric(3,1) = 0.0_dp
+metric(3,2) = 0.0_dp
+metric(3,4) = 0.0_dp
+
+metric(4,2) = 0.0_dp
+metric(4,3) = 0.0_dp
 
 
 end subroutine calculate_covariant_metric_kerr
@@ -157,20 +156,494 @@ end subroutine calculate_covariant_metric_kerr
 SUBROUTINE calculate_christoffel(r,theta)
 !Arguments
 real(kind=dp), intent(in) :: r,theta
+!Other
+real(kind=dp) :: Sg, Dl
 
 
-call ChristoffelQuad(r,theta)
+Sg = r**2+a**2*cos(theta)**2  
+Dl = r**2 + a**2 - 2.0_dp*r
+
+G0_00 = 0.0_dp
+G0_01 = (r**2+a**2)*(r**2-a**2*cos(theta)**2)/(Sg**2*Dl)
+G0_02 = -2.0_dp*r*a**2*sin(theta)*cos(theta)/Sg**2
+G0_03 = 0.0_dp
+G0_11 = 0.0_dp
+G0_12 = 0.0_dp
+G0_13 = -a*((3.0_dp*r**2-a**2)*(r**2+a**2)-a**2*(r**2-a**2)*sin(theta)**2)        &
+*sin(theta)**2/(Sg**2*Dl)
+G0_22 = 0.0_dp
+G0_23 = 2.0_dp*r*a**3*sin(theta)**3*cos(theta)/Sg**2
+G0_33 = 0.0_dp
+
+G1_00 = Dl*(r**2-a**2*cos(theta)**2)/Sg**3
+G1_01 = 0.0_dp
+G1_02 = 0.0_dp
+G1_03 = -a*Dl*(r**2-a**2*cos(theta)**2)*sin(theta)**2/Sg**3
+G1_11 = (-(r**2-a**2)+a**2*sin(theta)**2*(r-1.0_dp))/(Sg*Dl)
+G1_12 = -a**2*sin(theta)*cos(theta)/Sg
+G1_13 = 0.0_dp
+G1_22 = -r*Dl/Sg
+G1_23 = 0.0_dp
+G1_33 = -(r*(a**2+r**2)**2-a**2*sin(theta)**2*(-a**2*sin(theta)**2*(r-1.0_dp)            &
+-1.0_dp*a**2+r*(2.0_dp*(r**2+a**2)+r)))*Dl*sin(theta)**2/Sg**3
+
+G2_00 = -2.0_dp*r*a**2*sin(theta)*cos(theta)/Sg**3
+G2_01 = 0.0_dp
+G2_02 = 0.0_dp
+G2_03 = 2.0_dp*r*a*(r**2+a**2)*sin(theta)*cos(theta)/Sg**3
+G2_11 = a**2*sin(theta)*cos(theta)/(Sg*Dl)
+G2_12 = r/Sg
+G2_13 = 0.0_dp
+G2_22 = -a**2*sin(theta)*cos(theta)/Sg
+G2_23 = 0.0_dp
+G2_33 = -((r**2+a**2)**3-a**2*Dl*(2.0_dp*(r**2+a**2)-a**2*sin(theta)**2)*sin(theta)**2) &
+*sin(theta)*cos(theta)/Sg**3
+
+G3_00 = 0.0_dp
+G3_01 = a*(r**2-a**2*cos(theta)**2)/(Sg**2*Dl)
+G3_02 = -2.0_dp*r*a*(cos(theta)/sin(theta))/Sg**2
+G3_03 = 0.0_dp
+G3_11 = 0.0_dp
+G3_12 = 0.0_dp
+G3_13 = (r*Dl*(r**2+a**2)+a**4*(r-1.0_dp)*sin(theta)**4-a**2*(a**2+r**2)*(2.0_dp*r-1.0_dp)*sin(theta)**2) &
+/(Sg**2*Dl)
+G3_22 = 0.0_dp
+G3_23 = ((r**2+a**2)**2+sin(theta)**4*a**4-2.0_dp*a**2*(r**2-1.0_dp*r+a**2)*sin(theta)**2)*(cos(theta)/sin(theta))/Sg**2 
+G3_33 = 0.0_dp
 
 
 
-end subroutine calculate_christoffel
+
+
+END SUBROUTINE calculate_christoffel
 
 SUBROUTINE calculate_riemann(r,theta)
 !Argument
 real(kind = dp) :: r,theta
+!Other
+real(kind=dp) :: M,Dl,Sg
 
-call RiemannQuad(r,theta)
 
+M = 1.0_dp
+Sg = r**2+a**2*cos(theta)**2  
+Dl = r**2 + a**2 - 2.0_dp*M*r
+
+R_0101 = -M*r*(r**2-3.0_dp*a**2*cos(theta)**2)*(2.0_dp*Dl+a**2*sin(theta)**2)/(Sg**3*Dl)
+
+
+R_0102 = 3.0_dp*M*a**2*(3.0_dp*r**2-a**2*cos(theta)**2)*sin(theta)*cos(theta)/Sg**3
+
+
+R_0103 = 0.0_dp
+
+
+R_0112 = 0.0_dp
+
+
+R_0113 = -M*r*a*(3.0_dp*(r**2+a**2)-4.0_dp*M*r)*(r**2-3.0_dp*a**2*cos(theta)**2)*sin(theta)**2  &
+/(Sg**3*Dl)
+
+
+R_0123 = M*a*(3.0_dp*r**2-a**2*cos(theta)**2)*(2.0_dp*(r**2+a**2)+a**2*sin(theta)**2)           &
+*sin(theta)*cos(theta)/Sg**3
+
+
+R_0202 = M*r*(r**2-3.0_dp*a**2*cos(theta)**2)*(Dl+2.0_dp*a**2*sin(theta)**2)/Sg**3
+
+
+R_0203 = 0.0_dp
+
+
+R_0212 = 0.0_dp
+
+
+R_0213 = M*a*(3.0_dp*r**2-a**2*cos(theta)**2)*(r**2+a**2+2.0_dp*a**2*sin(theta)**2)             &
+*sin(theta)*cos(theta)/Sg**3
+
+
+R_0223 = M*r*a*(r**2-3.0_dp*a**2*cos(theta)**2)*(3.0_dp*(r**2+a**2)-2.0_dp*M*r)*sin(theta)**2/Sg**3
+
+
+R_0303 = M*r*Dl*(r**2-3.0_dp*a**2*cos(theta)**2)*sin(theta)**2/Sg**3
+
+
+R_0312 = -M*a*(3.0_dp*r**2-a**2*cos(theta)**2)*sin(theta)*cos(theta)/Sg**2
+
+
+R_0313 = 0.0_dp
+
+
+R_0323 = 0.0_dp
+
+
+R_1212 = -M*r*(r**2-3.0_dp*a**2*cos(theta)**2)/(Sg*Dl)
+
+
+R_1213 = 0.0_dp
+
+
+R_1223 = 0.0_dp
+
+
+R_1313 = -M*r*(r**2-3.0_dp*a**2*cos(theta)**2)*((r**2+a**2)**2+2.0_dp*a**2*Dl*sin(theta)**2)  &
+/(Sg**3*Dl)
+
+
+R_1323 = 3.0_dp*M*a**2*(r**2+a**2)*(3.0_dp*r**2-a**2*cos(theta)**2)*sin(theta)**3*cos(theta)/Sg**3
+
+
+R_2323 = M*r*(r**2-3.0_dp*a**2*cos(theta)**2)*(2.0_dp*(r**2+a**2)**2+a**2*Dl*sin(theta)**2)  &
+/Sg**3
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+R_0201 = R_0102
+
+
+R_0301 = R_0103
+
+
+R_1201 = R_0112
+
+
+R_1301 = R_0113
+
+
+R_2301 = R_0123
+
+
+R_0302 = R_0203
+
+
+R_1202 = R_0212
+
+
+R_1302 = R_0213
+
+
+R_2302 = R_0223
+
+
+R_1203 = R_0312
+
+
+R_1303 = R_0313
+
+
+R_2303 = R_0323
+
+
+R_1312 = R_1213
+
+
+R_2312 = R_1223
+
+
+R_2313 = R_1323
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+R0_001 = 0.0_dp
+
+
+R0_002 = 0.0_dp
+
+
+R0_003 = 2.0_dp*sin(theta)**2*M**2*a*r**2*(r**2-3.0_dp*a**2*cos(theta)**2)/Sg**4
+
+
+R0_012 = -2.0_dp*(3.0_dp*r**2-a**2*cos(theta)**2)*r*M**2*cos(theta)*a**2*sin(theta)/(Sg**3*Dl)
+
+
+R0_013 = 0.0_dp
+
+
+R0_023 = 0.0_dp
+
+
+R0_101 = M*r*(2.0_dp*(r**2+a**2)+a**2*sin(theta)**2)*(r**2-3.0_dp*a**2*cos(theta)**2)/(Sg**3*Dl)
+
+
+R0_102 = -(3.0_dp*r**2-a**2*cos(theta)**2)*(3.0_dp*(r**2+a**2)-2*M*r)*M*a**2*sin(theta)*cos(theta)/(Sg**3*Dl)
+
+
+R0_103 = 0.0_dp
+
+
+R0_112 = 0.0_dp
+
+
+R0_113 = 3.0_dp*sin(theta)**2*a*M*r*(r**2+a**2)*(r**2-3.0_dp*a**2*cos(theta)**2)/(Sg**3*Dl)
+
+
+R0_123 = -cos(theta)*sin(theta)*M*a*(3.0_dp*r**2-a**2*cos(theta)**2)*(2.0_dp*(r**2+a**2)**2+a**2*sin(theta)**2*Dl)/(Sg**3*Dl)
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+R0_201 = -(3.0_dp*r**2-a**2*cos(theta)**2)*(3.0_dp*(r**2+a**2)-4*M*r)*a**2*sin(theta)*cos(theta)*M/(Sg**3*Dl)
+
+
+R0_202 = -M*r*(r**2-3.0_dp*a**2*cos(theta)**2)*(r**2+a**2+2*a**2*sin(theta)**2)/Sg**3
+
+
+R0_203 = 0.0_dp
+
+
+R0_212 = 0.0_dp
+
+
+R0_213 = -(3.0_dp*r**2-a**2*cos(theta)**2)*((a**2+r**2)**2+2.0_dp*a**2*sin(theta)**2*Dl)*M*a*sin(theta)*cos(theta)/(Sg**3*Dl)
+
+
+R0_223 = -3.0_dp*sin(theta)**2*M*r*a*(a**2+r**2)*(r**2-3.0_dp*a**2*cos(theta)**2)/Sg**3
+
+
+R0_301 = 0.0_dp
+
+
+R0_302 = 0.0_dp
+
+
+R0_303 = -sin(theta)**2*M*r*(r**2+3*a**2*sin(theta)**2-3*a**2)*((a**2+r**2)**2-a**2*sin(theta)**2*Dl)/Sg**4
+
+
+R0_312 = (3.0_dp*r**2-a**2*cos(theta)**2)*((a**2+r**2)**2-a**2*sin(theta)**2*Dl)*M*a*sin(theta)*cos(theta)/(Sg**3*Dl)
+
+
+R0_313 = 0.0_dp
+
+
+R0_323 = 0.0_dp
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+R1_001 = M*r*(r**2-3.0_dp*a**2*cos(theta)**2)*(a**2*sin(theta)**2+2.0_dp*Dl)/Sg**4
+
+
+R1_002 = -3.0_dp*Dl*M*a**2*(3.0_dp*r**2-a**2*cos(theta)**2)*sin(theta)*cos(theta)/Sg**4
+
+
+R1_003 = 0.0_dp
+
+
+R1_012 = 0.0_dp
+
+
+R1_013 = M*r*a*(3.0_dp*(r**2+a**2)-4.0_dp*M*r)*(r**2-3.0_dp*a**2*cos(theta)**2)*sin(theta)**2/Sg**4
+
+
+R1_023 = -a*M*(2.0_dp*(r**2+a**2)+a**2*sin(theta)**2)*(3.0_dp*r**2-a**2*cos(theta)**2)*Dl*cos(theta)*sin(theta)/Sg**4
+
+
+R1_101 = 0.0_dp
+
+
+R1_102 = 0.0_dp
+
+
+R1_103 = 0.0_dp
+
+
+R1_112 = 0.0_dp
+
+
+R1_113 = 0.0_dp
+
+
+R1_123 = 0.0_dp
+
+
+R1_201 = 0.0_dp
+
+
+R1_202 = 0.0_dp
+
+
+R1_203 = -cos(theta)*sin(theta)*a*M*(3.0_dp*r**2-a**2*cos(theta)**2)*Dl/Sg**3
+
+
+R1_212 = -M*r*(r**2-3.0_dp*a**2*cos(theta)**2)/Sg**2
+
+
+R1_213 = 0.0_dp
+
+
+R1_223 = 0.0_dp
+
+
+R1_301 = -sin(theta)**2*M*r*a*(r**2-3.0_dp*a**2*cos(theta)**2)*(3.0_dp*(r**2+a**2)-4.0_dp*M*r)/Sg**4
+
+
+R1_302 = a*M*(3.0_dp*r**2-a**2*cos(theta)**2)*(r**2+a**2+2.0_dp*a**2*sin(theta)**2)*Dl*cos(theta)*sin(theta)/Sg**4
+
+
+R1_303 = 0.0_dp
+
+
+R1_312 = 0.0_dp
+
+
+R1_313 = -sin(theta)**2*M*r*(r**2-3.0_dp*a**2*cos(theta)**2)*((r**2+a**2)**2+2.0_dp*a**2*Dl*sin(theta)**2)/Sg**4
+
+
+R1_323 = 3.0_dp*M*a**2*(r**2+a**2)*(3.0_dp*r**2-a**2*cos(theta)**2)*Dl*cos(theta)*sin(theta)**3/Sg**4 
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+R2_001 = -3.0_dp*M*a**2*(3.0_dp*r**2-a**2*cos(theta)**2)*sin(theta)*cos(theta)/Sg**4
+
+
+R2_002 = -M*r*(r**2-3.0_dp*a**2*cos(theta)**2)*(2.0_dp*a**2*sin(theta)**2+Dl)/Sg**4
+
+
+R2_003 = 0.0_dp
+
+
+R2_012 = 0.0_dp
+
+
+R2_013 = -a*M*(3.0_dp*r**2-a**2*cos(theta)**2)*(r**2+a**2+2.0_dp*a**2*sin(theta)**2)*cos(theta)*sin(theta)/Sg**4
+
+
+R2_023 = -M*r*a*(r**2-3.0_dp*a**2*cos(theta)**2)*(3.0_dp*(r**2+a**2)-2.0_dp*M*r)*sin(theta)**2/Sg**4
+
+
+R2_101 = 0.0_dp
+
+
+R2_102 = 0.0_dp
+
+
+R2_103 = a*M*(3.0_dp*r**2-a**2*cos(theta)**2)*cos(theta)*sin(theta)/Sg**3
+
+
+R2_112 = M*r*(r**2-3.0_dp*a**2*cos(theta)**2)/(Dl*Sg**2)
+
+
+R2_113 = 0.0_dp
+
+
+R2_123 = 0.0_dp
+
+
+R2_201 = 0.0_dp
+
+
+R2_202 = 0.0_dp
+
+
+R2_203 = 0.0_dp
+
+
+R2_212 = 0.0_dp
+
+
+R2_213 = 0.0_dp
+
+
+R2_223 = 0.0_dp
+
+
+R2_301 = a*M*(2.0_dp*(r**2+a**2)+a**2*sin(theta)**2)*(3.0_dp*r**2-a**2*cos(theta)**2)*cos(theta)*sin(theta)/Sg**4
+
+
+R2_302 = M*r*a*(r**2-3.0_dp*a**2*cos(theta)**2)*(3.0_dp*(r**2+a**2)-2.0_dp*M*r)*sin(theta)**2/Sg**4
+
+
+R2_303 = 0.0_dp
+
+
+R2_312 = 0.0_dp
+
+
+R2_313 = 3.0_dp*M*a**2*(r**2+a**2)*(3.0_dp*r**2-a**2*cos(theta)**2)*cos(theta)*sin(theta)**3/Sg**4
+
+
+R2_323 = M*r*(r**2-3.0_dp*a**2*cos(theta)**2)*(2.0_dp*(r**2+a**2)**2+a**2*Dl*sin(theta)**2)*sin(theta)**2/Sg**4 
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+R3_001 = 0.0_dp
+
+
+R3_002 = 0.0_dp
+
+
+R3_003 = 0.0_dp
+
+
+R3_012 = -(3.0_dp*r**2-a**2*cos(theta)**2)*(a**2*sin(theta)**2-Dl)*M*a*(cos(theta)/sin(theta))/(Dl*Sg**3)
+
+
+R3_013 = 0.0_dp
+
+
+R3_023 = 0.0_dp
+
+
+R3_101 = 3.0_dp*M*r*a*(r**2-3.0_dp*a**2*cos(theta)**2)/(Dl*Sg**3)
+
+
+R3_102 = -a*M*(3.0_dp*r**2-a**2*cos(theta)**2)*(2.0_dp*a**2*sin(theta)**2+Dl)*(cos(theta)/sin(theta))/(Dl*Sg**3)
+
+
+R3_103 = 0.0_dp
+
+
+R3_112 = 0.0_dp
+
+
+R3_113 = M*r*(r**2-3.0_dp*a**2*cos(theta)**2)*(r**2+a**2+2.0_dp*a**2*sin(theta)**2)/(Dl*Sg**3)
+
+
+R3_123 = -(3.0_dp*r**2-a**2*cos(theta)**2)*(3.0_dp*(r**2+a**2)-2.0_dp*M*r)*M*a**2*sin(theta)*cos(theta)/(Dl*Sg**3)
+
+
+R3_201 = -(3.0_dp*r**2-a**2*cos(theta)**2)*(a**2*sin(theta)**2+2.0_dp*Dl)*M*a*(cos(theta)/sin(theta))/(Dl*Sg**3)
+
+
+R3_202 = -3.0_dp*M*r*a*(r**2-3.0_dp*a**2*cos(theta)**2)/Sg**3
+
+
+R3_203 = 0.0_dp
+
+
+R3_212 = 0.0_dp
+
+
+R3_213 = -M*a**2*(3*r**2-a**2*cos(theta)**2)*(3.0_dp*(r**2+a**2)-4.0_dp*M*r)*sin(theta)*cos(theta)/(Dl*Sg**3)
+
+
+R3_223 = -M*r*(2.0_dp*(r**2+a**2)+a**2*sin(theta)**2)*(r**2-3.0_dp*a**2*cos(theta)**2)/Sg**3
+
+
+R3_301 = 0.0_dp
+
+
+R3_302 = 0.0_dp
+
+
+R3_303 = -2.0_dp*M**2*a*r**2*(r**2-3.0_dp*a**2*cos(theta)**2)*sin(theta)**2/Sg**4
+
+
+R3_312 = 2.0_dp*M**2*r*a**2*(3.0_dp*r**2-a**2*cos(theta)**2)*cos(theta)*sin(theta)/(Dl*Sg**3)
+
+
+R3_313 = 0.0_dp
+
+
+R3_323 = 0.0_dp
 
 END SUBROUTINE calculate_riemann
 
@@ -234,36 +707,36 @@ H33 = metric(4,4)
 
 
 !And finally calculate
-Sg = r**2+a**2*cos(theta)**2
+Sg = r**2+a**2*cos(theta)**2  
 eta0123 = Sg*sin(theta)
 
 
 S_01 = eta0123/m0*((H00*H11-H01*H01)*(P2*S3-P3*S2)                    &
-+ (H00*H12-H01*H02)*(P3*S1-P1*S3) + (H00*H13-H01*H03)*(P1*S2-P2*S1)   &
++ (H00*H12-H01*H02)*(P3*S1-P1*S3) + (H00*H13-H01*H03)*(P1*S2-P2*S1)   & 
 + (H10*H12-H11*H02)*(P0*S3-P3*S0) + (H10*H13-H11*H03)*(P2*S0-P0*S2)   &
 + (H20*H13-H21*H03)*(P0*S1-P1*S0))
 
 S_02 = eta0123/m0*((H00*H21-H02*H01)*(P2*S3-P3*S2)                    &
-+ (H00*H22-H02*H02)*(P3*S1-P1*S3) + (H00*H23-H02*H03)*(P1*S2-P2*S1)   &
++ (H00*H22-H02*H02)*(P3*S1-P1*S3) + (H00*H23-H02*H03)*(P1*S2-P2*S1)   & 
 + (H10*H22-H12*H02)*(P0*S3-P3*S0) + (H10*H23-H12*H03)*(P2*S0-P0*S2)   &
 + (H20*H23-H22*H03)*(P0*S1-P1*S0))
 
 S_03 = eta0123/m0*((H00*H31-H03*H01)*(P2*S3-P3*S2)                    &
-+ (H00*H32-H03*H02)*(P3*S1-P1*S3) + (H00*H33-H03*H03)*(P1*S2-P2*S1)   &
++ (H00*H32-H03*H02)*(P3*S1-P1*S3) + (H00*H33-H03*H03)*(P1*S2-P2*S1)   & 
 + (H10*H32-H13*H02)*(P0*S3-P3*S0) + (H10*H33-H13*H03)*(P2*S0-P0*S2)   &
 + (H20*H33-H23*H03)*(P0*S1-P1*S0))
 
 S_12 = eta0123/m0*((H01*H21-H02*H11)*(P2*S3-P3*S2)                    &
-+ (H01*H22-H02*H12)*(P3*S1-P1*S3) + (H01*H23-H02*H13)*(P1*S2-P2*S1)   &
-+ (H11*H22-H12*H12)*(P0*S3-P3*S0) + (H11*H23-H12*H13)*(P2*S0-P0*S2)   &
++ (H01*H22-H02*H12)*(P3*S1-P1*S3) + (H01*H23-H02*H13)*(P1*S2-P2*S1)   & 
++ (H11*H22-H12*H12)*(P0*S3-P3*S0) + (H11*H23-H12*H13)*(P2*S0-P0*S2)   & 
 + (H21*H23-H22*H13)*(P0*S1-P1*S0))
 
 S_13 = eta0123/m0*((H01*H31-H03*H11)*(P2*S3-P3*S2)                    &
-+ (H01*H32-H03*H12)*(P3*S1-P1*S3) + (H01*H33-H03*H13)*(P1*S2-P2*S1)   &
++ (H01*H32-H03*H12)*(P3*S1-P1*S3) + (H01*H33-H03*H13)*(P1*S2-P2*S1)   & 
 + (H11*H32-H13*H12)*(P0*S3-P3*S0) + (H11*H33-H13*H13)*(P2*S0-P0*S2)   &
 + (H21*H33-H23*H13)*(P0*S1-P1*S0))
 S_23 = eta0123/m0*((H02*H31-H03*H21)*(P2*S3-P3*S2)                    &
-+ (H02*H32-H03*H22)*(P3*S1-P1*S3) + (H02*H33-H03*H23)*(P1*S2-P2*S1)   &
++ (H02*H32-H03*H22)*(P3*S1-P1*S3) + (H02*H33-H03*H23)*(P1*S2-P2*S1)   & 
 + (H12*H32-H13*H22)*(P0*S3-P3*S0) + (H12*H33-H13*H23)*(P2*S0-P0*S2)   &
 + (H22*H33-H23*H23)*(P0*S1-P1*S0))
 
@@ -304,9 +777,9 @@ P3 = PVector(4)
 
 
 M = 1.0_dp !legacy
-
+ 
 delta = 2.0_dp*(m0**2 + lambda*                                                             &
-(R_0101*S_01**2+R_0202*S_02**2+R_2323*S_23**2+R_0203*S_02*S_03+R_1301*S_13*S_01             &
+(R_0101*S_01**2+R_0202*S_02**2+R_2323*S_23**2+R_0203*S_02*S_03+R_1301*S_13*S_01             & 
 +R_1201*S_12*S_01+R_0313*S_03*S_13+R_0312*S_03*S_12+R_0113*S_01*S_13+R_0112*S_01*S_12       &
 +R_0301*S_03*S_01+R_1212*S_12**2+R_0201*S_02*S_01+R_0303*S_03**2+R_0302*S_03*S_02           &
 +R_1312*S_13*S_12+R_0103*S_01*S_03+R_0102*S_01*S_02+R_1313*S_13**2+R_0123*S_01*S_23         &
@@ -383,7 +856,10 @@ Xprime(4) = - (P3 + lambda*RPS_3/Delta)/m0**2
 
 call magnitude(metric,Xprime,Vsq)
 
+
 Vsq = g00*Xprime(1)**2 + g11*Xprime(2)**2 + g22*Xprime(3)**2 + g33*Xprime(4)**2 + 2.0_dp*g30*Xprime(1)*Xprime(4)
+
+
 
 
 
@@ -393,7 +869,10 @@ PV = -sqrt(-1.0_dp/Vsq)
 Xprime = Xprime * PV
 
 
-Vsq = g00*Xprime(1)**2 + g11*Xprime(2)**2 + g22*Xprime(3)**2 + g33*Xprime(4)**2 + 2.0_dp*g30*Xprime(1)*Xprime(4)
+
+
+!print *, 'Check:', g00*Xprime(1)**2 + g11*Xprime(2)**2 + g22*Xprime(3)**2 + g33*Xprime(4)**2 + 2.0_dp*g30*Xprime(1)*Xprime(4)
+
 
 
 end subroutine calculate_FourVelocity
@@ -405,15 +884,15 @@ subroutine calculate_FourMom(VVector, PVector, Pprime)
 !Arguments
 real(kind=dp), intent(in), dimension(4) :: VVector, PVector !Velocity and momentum vector
 
-real(kind=dp), intent(out), dimension(4) :: Pprime
+real(kind=dp), intent(out), dimension(4) :: Pprime 
 
 !Other
 real (kind=dp) :: V0,V1,V2,V3
-real(kind=dp) :: P0,P1,P2,P3
+real(kind=dp) :: P0,P1,P2,P3 
 real(kind=dp) :: Pdot1_0, Pdot1_1, Pdot1_2, Pdot1_3
 real(kind=dp) :: RS0_0, RS0_1, RS0_2, RS0_3, RS1_0, RS1_1, RS1_2, RS1_3,                     &
                  RS2_0, RS2_1, RS2_2, RS2_3, RS3_0, RS3_1, RS3_2, RS3_3
-real(kind=dp) :: Pdot2_0, Pdot2_1, Pdot2_2, Pdot2_3
+real(kind=dp) :: Pdot2_0, Pdot2_1, Pdot2_2, Pdot2_3 
 
 V0 = VVector(1)
 V1 = VVector(2)
@@ -494,7 +973,7 @@ real(kind=dp), dimension(4), intent(in) :: VVector, PVector,SVector
 real(kind=dp), dimension(4), intent(out) :: Sprime
 !Other
 real (kind=dp) :: V0,V1,V2,V3
-real(kind=dp) :: S0,S1,S2,S3
+real(kind=dp) :: S0,S1,S2,S3 
 real(kind=dp) :: P0,P1,P2,P3
 real(kind=dp) :: Scoeff
 real(kind=dp) :: Sdot2_0, Sdot2_1, Sdot2_2, Sdot2_3

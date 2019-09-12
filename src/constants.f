@@ -20,7 +20,7 @@ real(kind=dp), parameter :: convert_spin= light_c/(Newton_g*(MBH*Msolar)**2.0_dp
 
 
 
-character(len=200) :: PathOut
+
 
 
 
@@ -65,9 +65,8 @@ real(kind=dp), parameter :: m0 = MPSR/MBH !Mass ratio
 integer(kind=dp), parameter :: entries = 12 !Number of differetnai eqns 4x(position,spin,momentum)
 real(kind=dp), parameter :: FinalPhi = 2.0_dp*PI*N_orbit !The final phi after all the orbits
 
-
 !Integration constants
-real(kind=dp) :: h =1.0d-1 !Initial stepsize. This will be varied by RKF so it is not a parameter 
+real(kind=dp) :: h !=1.0d-1 !Initial stepsize. This will be varied by RKF so it is not a parameter 
 real(kind=dp), parameter :: escal = 1.0d20
 real(kind=dp), parameter :: S = 0.90_dp
 real(kind=dp), parameter :: Pgrow = -0.20_dp
@@ -76,11 +75,9 @@ real(kind=dp), parameter :: errcon = (5.0_dp/S)**(1.0_dp/Pgrow)
 integer(kind=dp), parameter :: nrows = 1d6 
 
 
-!Savefiles
-character(len=200) :: BinaryData, PlotData, Fname
-character(len=200) :: PeriastronData, PeriastronScatter
-!Save Arrays
 
+!Savefiles
+character(len=200) :: PathOut,BinaryData, PlotData,Fname !Decalared later - cross compliatin issue from parameter.f
 real(kind=dp), parameter :: coarse = 1.0_dp !how much of total data is saved to formatted file 1 = lots, +infty = none
 
 
@@ -106,42 +103,6 @@ real(kind = dp) :: cbar4=13525.0_dp/55296.0_dp, cbar5 = 277.0_dp/14336.0_dp, cba
 
 !Some globally defined parameters which will be calculated later
 
-!For periapsis
-real(kind=dp) :: nx,ny,nz,nmag
-real(kind=dp), dimension(int(N_orbit),3) :: omega_array
-integer(kind=dp) :: i_periapsis
-
-!Unperturbed Kerr
-real(kind=dp) :: g00K, g11K, g22K, g33K, gCrossK
-real(kind=dp) :: g00dr,g00dt, &
-                 g11dr,g11dt, &
-                 g22dr,g22dt, &
-                 g33dr,g33dt, &
-                 gCrossdr, gCrossdt
-
-real(kind=dp) :: g00drdr, g00dtdt,g00drdt,g00dtdr, &
-                 g11drdr, g11dtdt,g11drdt,g11dtdr, &
-                 g22drdr, g22dtdt,g22drdt,g22dtdr, & 
-                 g33drdr, g33dtdt,g33drdt,g33dtdr, & 
-                 gCrossdrdr, gCrossdtdt,gCrossdrdt,gCrossdtdr 
-
-
-
-!Perturbation
-real(kind=dp) :: h00, h11,h22,h33
-real(kind=dp) :: h00dr,h00dt, &
-                 h11dr,h11dt, &
-                 h22dr,h22dt, &
-                 h33dr,h33dt 
-
-
-real(kind=dp) :: h00drdr, h00dtdt,h00drdt,h00dtdr, &
-                 h11drdr, h11dtdt,h11drdt,h11dtdr, & 
-                 h22drdr, h22dtdt,h22drdt,h22dtdr, & 
-                 h33drdr, h33dtdt,h33drdt,h33dtdr 
-
-
-
 real(kind=dp) :: m_sq, s_sq ! mass sqaures and s squared from initial condiitons module
 
 !Christoffel sybols
@@ -149,6 +110,7 @@ real(kind=dp) ::    G0_00, G0_01, G0_02, G0_03, G0_11, G0_12, G0_13, G0_22, G0_2
                     G1_00, G1_01, G1_02, G1_03, G1_11, G1_12, G1_13, G1_22, G1_23, G1_33,       &
                     G2_00, G2_01, G2_02, G2_03, G2_11, G2_12, G2_13, G2_22, G2_23, G2_33,       &
                     G3_00, G3_01, G3_02, G3_03, G3_11, G3_12, G3_13, G3_22, G3_23, G3_33
+
 
 !Riemann
 REAL(KIND=dp) ::                                                                &
