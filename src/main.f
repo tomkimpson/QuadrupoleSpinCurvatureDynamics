@@ -6,11 +6,15 @@ use parameters
 implicit none
 
 
-lambda = 0.0_dp
-call run()
 lambda = 1.0_dp
 call run()
 
+
+!lambda = 1.0_dp
+!call run()
+
+
+print *, 'Exit successful'
 end program main
 
 
@@ -75,9 +79,9 @@ Y_init(9:12) = SVector
 
 
 
+
 call rk(Y_init)
 
-print *, 'Code completed'
 
 end subroutine run
 

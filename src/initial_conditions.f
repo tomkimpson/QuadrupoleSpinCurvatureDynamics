@@ -18,6 +18,7 @@ contains
 subroutine setup()
 
 character(len=10) :: LamStr
+character(len=10) :: QStr
 
 
         if (KeplerianPeriod .EQ. 0.0_dp) then
@@ -36,11 +37,12 @@ rp = semi_latus/(1.0_dp + eccentricity)
 
 !Declare savefiles
 write(LamStr,'(F10.2)') lambda
+write(QStr,'(F10.2)') epsQ
 
 call get_environment_variable("QuadDir", PathOut)
 
 
-Fname = 'data_lambda='//trim(adjustl(LamStr))
+Fname = 'data_lambda='//trim(adjustl(LamStr))//'_epsQ='//trim(adjustl(Qstr))
 BinaryData = trim(adjustl(PathOut))//&
              trim(adjustl(Fname))//&
              '.dat'

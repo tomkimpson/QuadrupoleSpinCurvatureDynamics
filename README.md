@@ -29,7 +29,7 @@ source ~/.bash_profile
 
 Just change the path `Users/tomkimpson/Data/Quadrupole/` to some appropriate local path. 
 
-You can check the environemnt variable has been added to `bash_profile` by either `env` or `vim ~/.bashprofile`
+You can check the environment variable has been added to `bash_profile` by either `env` or `vim ~/.bashprofile`
 
 
 The code should then run as is, out of the box. Try
