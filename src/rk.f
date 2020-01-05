@@ -25,12 +25,12 @@ real(kind=dp), dimension(size(y0)) :: y, y1
 !an array to store all the data. !Should be faster than dynamically allocating
 !However this does require more exploration
 !see https://stackoverflow.com/questions/8384406/how-to-increase-array-size-on-the-fly-in-fortran
-real(kind=dp), dimension(nrows,size(y0)) :: AllData !Big array to save all data
+real(kind=dp), dimension(nrows,size(y0)+1) :: AllData !Big array to save all data
 real(kind=dp), dimension(:,:),allocatable :: output !smaller array which will be outout
 integer(kind=dp) :: i,j !index for saving to array
 real(kind=dp) :: mm, xC, yC, zC !Cartesian components
 real(kind=dp), dimension(:), allocatable :: r,theta,phi,S1,S2,S3,Sx,Sy,Sz, thetaSL, phiSL
-
+real(kind=dp) :: tau
 
 
 y  = y0
@@ -38,19 +38,28 @@ y  = y0
 
 !Save the first row to array
 i = 1
-AllData(i,:) = y
-
+AllData(i,1:12) = y
+AllData(i,13) = tau
   
 
 !Integrate
-!do while (i .LT. 5e3)
-do while ( abs( y(4) - y0(4)) .LT. N_orbit*2.0_dp*PI)    
-   call RKF(y,y1)
+!
+!do while (i .LT. 5)
+!do while ( abs( y(4) - y0(4)) .LT. N_orbit*2.0_dp*PI)    
+!print *, abs( y(4) - y0(4)) , N_orbit*2.0_dp*PI
+
+do while (tau .LT. N_orbit*KeplerianPeriodSeconds*convert_s)
+
+    call RKF(y,y1)
     y = y1
     
     !Save the output
     i = i + 1
-    AllData(i,:) = y
+    AllData(i,1:12) = y
+    tau = tau + h
+    AllData(i,13) = tau
+ !   print *, y
+
 
 enddo
 
@@ -93,7 +102,8 @@ if (plot .EQ. 1) then
     zC = mm * cos(output(j,3)) 
     write(20, *) output(j,1), xC, yC, zC , & !t,x,y,z
                  output(j,2), output(j,3), output(j,4), & !r,theta,phi 
-                 output(j,10),output(j,11),output(j,12) !s1,s2,s3
+                 output(j,10),output(j,11),output(j,12), & !s1,s2,s3
+                 output(j,13) !tau
     endif 
     enddo
     close(20)

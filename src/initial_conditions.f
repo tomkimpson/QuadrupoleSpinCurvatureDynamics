@@ -8,7 +8,7 @@ use tensors
 
 implicit none
 
-private function_f, function_g, function_h, function_d, checks
+private function_f, function_g, function_h, function_d, checks, function_f3, function_h3
 
 public calculate_EQL, calculate_IC, calculate_EQL_circular, setup
 
@@ -92,33 +92,51 @@ real(kind=dp) :: r, theta, phi !initial location of particle
 real(kind=dp) :: sigma, delta,PP,RR,TT !Some useful functions
 real(kind=dp) :: tdot, rdot, thetadot, phidot !Kerr differential equations
 real(kind=dp), dimension(4,4) :: metric
-
+real(kind=dp) :: f3, h3, ur,ut,uphi,utheta
 
 
 r = r_init
 theta = theta_init
 phi = phi_init
 
-sigma = r**2.0_dp +a**2.0_dp * cos(theta)
-delta = r**2.0_dp +a**2.0_dp - 2.0_dp*r
+sigma = r**2.0_dp +a**2 * cos(theta)
+delta = r**2.0_dp +a**2 - 2.0_dp*r
 
 
-PP = E* (r**2.0_dp + a**2.0_dp) - a*L
-RR = PP**2.0_dp -delta*(r**2.0_dp + Q + (L-a*E)**2.0_dp)
-TT = Q - cos(theta)**2.0_dp*(a**2.0_dp * (1.0_dp - E**2.0_dp)+L**2.0_dp/sin(theta)**2.0_dp)
+call function_f3(r,f3)
+call function_h3(r,h3)
 
+PP = E* (r**2.0_dp + a**2) - a*L
+
+
+
+ut = ((r**2+a**2)*PP/delta -a*(a*E-L))/r**2.0_dp - epsQ*(1.0_dp - 2.0_dp/r)**(-1.0_dp) * f3*E
+
+ur = (PP**2.0_dp - delta*(r**2.0_dp + (L - a*E)**2.0_dp) - epsQ*r**4.0_dp * (1.0_dp -2.0_dp/r)*((f3-h3)*L**2.0_dp/r**2.0_dp + f3) )&
+/r**4.0_dp
+
+utheta = 0.0_dp
+
+
+uphi = (a*PP/delta -a*E + L)/r**2.0_dp - epsQ*h3*L/r**2.0_dp
 
 
 call checks(RR,TT)
 
 
+if (ur .LT. 0.0_dp .and. abs(ur) .LT. 1e-33) then
+ur = 0.0_dp
+endif
+!fixing float bug? check this
 
 
 
-PVector(1) = m0 * (a*(L-a*E*sin(theta)**2.0_dp) + (r**2.0_dp + a**2.0_dp)*PP/delta)/sigma
-PVector(2) = m0*sqrt(RR) / sigma
-PVector(3) = -m0*sqrt(TT) / sigma
-PVector(4) = m0*((L/sin(theta)**2 - a*E) + a*PP/delta)/sigma
+
+
+PVector(1) = m0 * ut
+PVector(2) = m0*sqrt(ur) 
+PVector(3) = 0.0_dp
+PVector(4) = m0*uphi
 
 
 
@@ -251,7 +269,7 @@ L = L1 + DD*sqrt(L2)/h1
 
 !And finally the Carter constant
 
-Q = zMinus * (a**2.0_dp * (1.0_dp - E**2.0_dp) + L**2.0_dp/(1.0_dp-zMinus))
+Q = zMinus * (a**2 * (1.0_dp - E**2.0_dp) + L**2.0_dp/(1.0_dp-zMinus))
 
 end subroutine calculate_EQL
 
@@ -267,8 +285,17 @@ real(kind=dp) :: r,f ! in , out
 real(kind=dp) :: delta
 real(kind=dp) :: ans1, ans2, rr
 integer(kind=dp) :: pow
-delta = r**2 - 2.0_dp*r + a**2.0_dp
-f = r**4 + a**2.0_dp * (r*(r+2.0_dp) + zMinus*delta)
+
+
+
+
+if (iota .NE. 0.0_dp) then
+print *, 'Error! Quadrupole orbital parameter mapping is only defined for equatorial plane'
+stop
+endif
+
+delta = r**2 - 2.0_dp*r + a**2
+f = r**4 + a**2 * (r*(r+2.0_dp))
 
 
 end subroutine function_f
@@ -282,10 +309,16 @@ end subroutine function_g
 
 subroutine function_h(r,h)
 real(kind=dp) :: r,h
-real(kind=dp) :: delta
+real(kind=dp) :: f3,h3
 
-delta = r**2.0_dp - 2.0_dp*r + a**2.0_dp
-h = r*(r-2.0_dp) + zMinus*delta/(1.0_dp - zMinus)
+
+
+
+call function_f3(r,f3)
+call function_h3(r,h3)
+
+
+h = r*(r-2.0_dp) -epsQ *(2.0_dp*f3*r - 2.0_dp*h3*r - f3*r**2 + h3*r**2)
 
 end subroutine function_h
 
@@ -294,17 +327,55 @@ end subroutine function_h
 
 subroutine function_d(r,d)
 real(kind=dp) :: r, d
-real(kind=dp) :: delta
+real(kind=dp) :: delta, f3
 
-delta = r**2.0_dp - 2.0_dp*r + a**2.0_dp
-d = (r**2.0_dp + a**2.0_dp * zMinus)*delta
+delta = r**2.0_dp - 2.0_dp*r + a**2
+
+
+call function_f3(r,f3)
+
+d = (r**2.0_dp)*delta - epsQ*(2.0_dp*f3*r**3 - f3*r**4)
 
 end subroutine function_d
 
 
 
 
+subroutine function_f3(r,f3)
+real(kind=dp) :: r,f3
+real(kind=dp) :: F2,A1, F2_upper, F2_lower
 
+F2_upper = -5.0_dp*(r-1.0_dp)*(2.0_dp + 6.0_dp*r - 3.0_dp*r**2)
+F2_lower = 8.0_dp*r*(r-2.0_dp)
+F2 = F2_upper/ F2_lower
+
+A1= 15.0_dp*r*(r-2.0_dp)*log(r/(r-2.0_dp)) / 16.0_dp
+
+
+f3 = F2 - A1
+
+
+end subroutine function_f3
+
+
+
+
+
+subroutine function_h3(r,h3)
+real(kind=dp) :: r,h3
+real(kind=dp) :: H2,A2
+
+
+
+H2 = 5.0_dp*(2.0_dp -3.0_dp*r - 3.0_dp*r**2)/(8.0_dp*r)
+
+A2 = -15.0_dp*(r**2 - 2.0_dp)*log(r/(r-2.0_dp))/16.0_dp
+
+
+h3 = H2 - A2
+
+
+end subroutine function_h3
 
 
 

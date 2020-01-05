@@ -67,7 +67,7 @@ real(kind=dp), parameter :: FinalPhi = 2.0_dp*PI*N_orbit !The final phi after al
 
 !Integration constants
 real(kind=dp) :: h !=1.0d-1 !Initial stepsize. This will be varied by RKF so it is not a parameter 
-real(kind=dp), parameter :: escal = 1.0d20
+real(kind=dp), parameter :: escal = 1.0d19
 real(kind=dp), parameter :: S = 0.90_dp
 real(kind=dp), parameter :: Pgrow = -0.20_dp
 real(kind=dp), parameter :: Pshrink = -0.250_dp

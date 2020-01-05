@@ -6,7 +6,7 @@ use constants
 implicit none
 
 
-private
+private perturbations
 
 
 public calculate_spintensor,calculate_riemann, calculate_christoffel, &
@@ -15,6 +15,37 @@ public calculate_spintensor,calculate_riemann, calculate_christoffel, &
        calculate_covariant_metric_kerr, calculate_contravariant_metric_kerr
 
 contains
+
+
+
+
+subroutine perturbations(r,theta, hpert)
+!Arguments
+real(kind=dp),intent(in) :: r,theta
+real(kind=dp), dimension(4), intent(out) :: hpert
+!Other
+real(kind=dp) :: AA, BB, F1,F2
+
+AA = 1.0_dp - 2.0_dp/r
+BB = 1.0_dp - 3.0_dp*cos(theta)**2
+F1 = -5.0_dp*(r-1.0_dp) * (2.0_dp + 6.0_dp*r - 3.0_dp*r**2)/(8.0_dp*r*(r-2.0_dp)) &
+     -15.0_dp*r*(r-2.0_dp)*log(r/(r-2.0_dp)) / 16.0_dp
+F2 = 5.0_dp*(2.0_dp-3.0_dp*r - 3.0_dp*r**2)/(8.0_dp*r) &
+     +15.0_dp*(r**2 - 2.0_dp) * log(r/(r-2.0_dp)) / 16.0_dp
+
+
+hpert(1) = BB*F1/AA !tt
+hpert(2) = AA*BB*F1 !rr
+hpert(3) = -BB*F2/r**2 !thth
+hpert(4) = BB*F2/(r*sin(theta))**2 !phi phi
+
+
+end subroutine perturbations
+
+
+
+
+
 
 
 
@@ -44,12 +75,31 @@ end subroutine magnitude
 
 
 
-subroutine calculate_contravariant_metric(r,theta,metric)
+subroutine calculate_contravariant_metric(covar, contra)
+!pass in the covariant metric, return the contravariant one
 !Arguments
-real(kind=dp), intent(IN) :: r, theta
-real(kind=dp), intent(out), dimension(4,4) :: metric
+real(kind=dp), intent(in), dimension(4,4) :: covar
+real(kind=dp), intent(out), dimension(4,4) :: contra
+!other
+real(kind=dp) :: gbar
 
-call calculate_contravariant_metric_kerr(r,theta,metric)
+
+contra = 0.0_dp
+
+gbar = covar(1,1)*covar(4,4) - covar(1,4)**2
+
+contra(1,1) = covar(4,4)/gbar
+contra(2,2) = 1.0_dp/covar(2,2)
+contra(3,3) = 1.0_dp/covar(3,3)
+contra(4,4) = covar(1,1)/gbar
+
+contra(1,4) = -covar(1,4)/gbar
+contra(4,1) = contra(1,4)
+
+
+
+
+!call calculate_contravariant_metric_kerr(r,theta,metric)
 
 
 end subroutine calculate_contravariant_metric
@@ -59,9 +109,28 @@ subroutine calculate_covariant_metric(r,theta,metric)
 !Arguments
 real(kind=dp), intent(IN) :: r, theta
 real(kind=dp), intent(out), dimension(4,4) :: metric
+!Other
+real(kind=dp), dimension(4) :: perts
+real(kind=dp), dimension(4,4) :: metricKerr
+
+!Unperturbed kerr metric
+call calculate_covariant_metric_kerr(r,theta,metricKerr)
+!Perturbations
+call perturbations(r,theta,perts)
 
 
-call calculate_covariant_metric_kerr(r,theta,metric)
+
+
+metric = 0.0_dp
+
+metric(1,1) = metricKerr(1,1) + epsQ*(metricKerr(1,1)**2 * perts(1) + metricKerr(1,4)**2 * perts(4))
+metric(2,2) = metricKerr(2,2) + epsQ*(metricKerr(2,2)**2 * perts(2))
+metric(3,3) = metricKerr(3,3) + epsQ*(metricKerr(3,3)**2 * perts(3))
+metric(4,4) = metricKerr(4,4) + epsQ*(metricKerr(4,4)**2 * perts(4) + metricKerr(1,4)**2 * perts(1))
+metric(1,4) = metricKerr(1,4) + epsQ*(metricKerr(1,4)*(metricKerr(1,1)*perts(1) + metricKerr(4,4)*perts(4)))
+metric(4,1) = metric(1,4)
+
+
 
 end subroutine calculate_covariant_metric
 
@@ -78,11 +147,11 @@ real(kind=dp), intent(out), dimension(4,4) :: metric
 real(kind=dp) :: sigma, delta
 
 
-sigma = r**2.0_dp + a**2.0_dp*cos(theta)**2
-delta = r**2.0_dp - 2.0_dp*r + a**2.0_dp
+sigma = r**2.0_dp + a**2*cos(theta)**2
+delta = r**2.0_dp - 2.0_dp*r + a**2
 
 
-metric(1,1) = - ((r**2.0_dp + a**2.0_dp) + 2.0_dp*r*a**2.0_dp*sin(theta)**2.0_dp/sigma)/delta
+metric(1,1) = - ((r**2.0_dp + a**2) + 2.0_dp*r*a**2*sin(theta)**2.0_dp/sigma)/delta
 metric(2,2) = delta/sigma
 metric(3,3) = 1.0_dp/sigma
 metric(4,4) = (1.0_dp-2.0_dp*r/sigma)/(delta*sin(theta)**2.0_dp)
@@ -119,15 +188,15 @@ real(kind=dp), intent(out), dimension(4,4) :: metric
 real(kind=dp) :: sigma, delta
 
 
-sigma = r**2.0_dp + a**2.0_dp*cos(theta)**2
-delta = r**2.0_dp - 2.0_dp*r + a**2.0_dp
+sigma = r**2.0_dp + a**2*cos(theta)**2
+delta = r**2.0_dp - 2.0_dp*r + a**2
 
 
 
 metric(1,1) = -(1.0_dp-2.0_dp*r/sigma)
 metric(2,2) = sigma/delta
 metric(3,3) = sigma
-metric(4,4) = (r**2.0_dp + a**2.0_dp + 2.0_dp*r*a**2.0_dp*sin(theta)**2.0_dp/sigma)*sin(theta)**2.0_dp
+metric(4,4) = (r**2.0_dp + a**2 + 2.0_dp*r*a**2*sin(theta)**2.0_dp/sigma)*sin(theta)**2.0_dp
 
 
 metric(1,4) = -2.0_dp*r*a*sin(theta)**2.0_dp/sigma

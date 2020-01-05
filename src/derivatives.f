@@ -3,7 +3,7 @@ module derivatives
 use parameters
 use constants
 use tensors
-
+use quadrupole_expressions 
 
 implicit none
 
@@ -23,7 +23,7 @@ real(kind=dp), intent(OUT), dimension(entries) :: dy !deriatives
 
 !Other
 real(kind=dp), dimension(4,4) :: metric,metricCONTRA !covariant and contravariant metric components
-real(kind=dp), dimension(4) ::  SVector, PVector
+real(kind=dp), dimension(4) ::  SVector, PVector,perts
 real(kind=dp), dimension(4) :: Xprime, Sprime, Pprime !derivative vectors
 
 !Read in the data
@@ -31,26 +31,23 @@ PVector = y(5:8)
 SVector = y(9:12)
 
 
+
+
+
 !Calculate the metric components
 call calculate_covariant_metric(y(2), y(3), metric)
-call calculate_contravariant_metric(y(2), y(3), metricCONTRA)
+call calculate_contravariant_metric(metric, metricCONTRA)
 
 
-!Do some checks here
 
 !Calculate Christoffel symbols - these are saved globally
-
-call calculate_christoffel(y(2), y(3))
-
+call ChristoffelQuad(y(2),y(3)) 
 !Calculate Riemann tensor - components are saved globally
-
-call calculate_riemann(y(2), y(3))
-
+call RiemannQuad(y(2), y(3))
 !Calculate components of antisymmetric spin tensor - cpts saved globally
 
 call calculate_spintensor(y(2), y(3), &
                             SVector, PVector, metricCONTRA)
-
 
 !Calculate 4-velocity
 call calculate_FourVelocity(PVector, metric,Xprime)
@@ -144,19 +141,28 @@ ratio = deltaErr/yscal
 errmax = escal * maxval(ratio)
 
 
-if (errmax .GT. 1.0_dp) then
+
+
+
+
+!TURNING OFF ADAPTIVE STEPSIZE
+
+
+
+!if (errmax .GT. 1.0_dp) then
 !This is not good. Do not update yOUT and reduce the stepsize
-call ShrinkStepsize(errmax)
-yOUT = yIN
-goto 11
-else
+!call ShrinkStepsize(errmax)
+!yOUT = yIN
+!goto 11
+!else
 !This is good. Update yOUT and try to increase the stepsize a little bit
-call GrowStepsize(errmax)
+!call GrowStepsize(errmax)
+!yOUT = ynew
+!endif
+
+
+!THIS BIT IS NEW
 yOUT = ynew
-endif
-
-
-
 
 end subroutine RKF
 

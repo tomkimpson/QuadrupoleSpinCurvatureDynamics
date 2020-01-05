@@ -6,12 +6,12 @@ use parameters
 implicit none
 
 
-lambda = 1.0_dp
+lambda = 0.0_dp
 call run()
 
 
-!lambda = 1.0_dp
-!call run()
+lambda = 1.0_dp
+call run()
 
 
 print *, 'Exit successful'
@@ -35,7 +35,7 @@ real(kind=dp), dimension(4) :: SVector, PVector !spin and momentum vectors for I
 real(kind=dp), dimension(entries) :: Y_init !the array of initial conditions to pass to the rk solver
 
 
-h = 1.0d-1
+h = 100.0_dp
 !Setup sma, periapsis etc.
 call setup()
 
@@ -49,6 +49,15 @@ else
 r_init = rp
 call calculate_EQL(E,Q,L)
 endif
+
+
+
+
+
+
+!print *, E,Q,L
+!stop
+
 
 !Set the spatial components of the spin-vector in the coordinate basis
 !This transformation is done locally - in the neighbourhood is it Minkowskian.
@@ -78,7 +87,9 @@ Y_init(5:8) = PVector
 Y_init(9:12) = SVector
 
 
-
+print *, Y_init(1:4)
+print *, Y_init(5:8)
+print *, Y_init(9:12)
 
 call rk(Y_init)
 
