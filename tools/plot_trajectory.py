@@ -11,7 +11,7 @@ import os
 
 
 
-d = 2
+d = 3
 
 
 #Set up plotting environment
@@ -39,12 +39,30 @@ def plot(f):
     z = data[:,3]
 
 
+    r = x**2 + y**2 + z**2
+    idx = np.argmin(r)
+    print (idx)
+
+
 
     #Plot it
 
 
     if (d == 3):
         ax1.plot(x,y,z)
+        ax1.scatter(x[0],y[0],z[0], c='g')
+        ax1.scatter(x[-1],y[-1],z[-1], c='r')
+        ax1.scatter(0,0,0, c='k')
+
+ 
+        perix = [0,x[idx]]
+        periy = [0,y[idx]]
+        periz = [0,z[idx]]
+        ax1.plot(perix,periy,periz,c='C1')
+
+        ax1.scatter(x[idx],y[idx],z[idx], c='C1')
+
+
         limit = max(max(x),max(y),max(z))
         ax1.set_xlim(-limit,+limit)
         ax1.set_ylim(-limit,+limit)

@@ -7,10 +7,10 @@ use quadrupole_expressions
 
 implicit none
 
-private derivs
+private 
 
 
-public RKF
+public RKF,derivs
 
 contains
 

@@ -22,14 +22,25 @@ real(kind=dp), parameter :: convert_spin= light_c/(Newton_g*(MBH*Msolar)**2.0_dp
 
 
 
+!New constants for code restructure
+
+
+real(kind=dp) :: KeplerianPeriod, KeplerianPeriodSeconds, SM3, eccentricity, a
+real(kind=dp) :: ObsTheta, ObsPhi, ObsX, ObsY, ObsZ 
+integer(kind=dp) :: nsteps
+!END
+
+
+real(kind=dp) :: epsQ != 0.100000000_dp !BH quadrupole moment
+
 
 
 
 !Convert some stuff from parameters to a more usable form (c.f. units)
 !Physical constants
 
-real(kind=dp), parameter :: KeplerianPeriodSeconds = KeplerianPeriod*365.0_dp*24.0_dp*3600.0_dp
-real(kind=dp), parameter :: SM3 =(mu*KeplerianPeriodSeconds**2.0_dp)/(4.0_dp * PI**2.0_dp)
+!real(kind=dp), parameter :: KeplerianPeriodSeconds = KeplerianPeriod*365.0_dp*24.0_dp*3600.0_dp
+!real(kind=dp), parameter :: SM3 =(mu*KeplerianPeriodSeconds**2.0_dp)/(4.0_dp * PI**2.0_dp)
 
 real(kind=dp) :: semi_major, semi_latus, ra,rp !These are declared later in setup.
 
@@ -77,7 +88,7 @@ integer(kind=dp), parameter :: nrows = 1d6
 
 
 !Savefiles
-character(len=200) :: PathOut,BinaryData, PlotData,Fname !Decalared later - cross compliatin issue from parameter.f
+character(len=200) :: PathOut,BinaryData, PlotData,Fname,RoemerData !Decalared later - cross compliatin issue from parameter.f
 real(kind=dp), parameter :: coarse = 1.0_dp !how much of total data is saved to formatted file 1 = lots, +infty = none
 
 

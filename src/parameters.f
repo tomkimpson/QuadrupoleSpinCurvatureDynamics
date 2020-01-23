@@ -17,17 +17,17 @@ real(kind=dp), parameter :: circular = 0 !Turn on/off a circular orbit. If on su
 
 
 
-real(kind=dp), parameter :: KeplerianPeriod = 0.10_dp
-real(kind=dp), parameter :: r_set = 100.0_dp !Set the sma. Only used if KepPer eq 0
-real(kind=dp), parameter :: eccentricity = 0.80_dp !Orbital eccentricity
+!real(kind=dp), parameter :: KeplerianPeriod = 0.10_dp
+real(kind=dp), parameter :: r_set = 20.0_dp !Set the sma. Only used if KepPer eq 0
+!real(kind=dp), parameter :: eccentricity = 0.80_dp !Orbital eccentricity
 real(kind=dp), parameter :: iota = 0.0_dp !Inclination w.r.t equatorial plane in degrees
-real(kind=dp), parameter :: N_orbit = 3.0_dp !Number of orbits to integrate
+real(kind=dp), parameter :: N_orbit = 3.050_dp !Number of orbits to integrate
 
 
 !BH intrinsic parameters
 real(kind=dp), parameter :: MBH = 4.310d6 !BH mass in solar masses
-real(kind=dp), parameter :: a= -0.50_dp !BH spin parameter
-real(kind=dp), parameter :: epsQ = 0.000000_dp !BH quadrupole moment
+!real(kind=dp), parameter :: a= -0.50_dp !BH spin parameter
+!real(kind=dp), parameter :: epsQ = 0.100000000_dp !BH quadrupole moment
 
 !PSR intrinsic parameters
 real(kind=dp), parameter :: MPSR = 1.40_dp !pulsar mass in solar masses

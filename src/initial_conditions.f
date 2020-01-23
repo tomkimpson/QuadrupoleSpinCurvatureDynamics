@@ -18,7 +18,7 @@ contains
 subroutine setup()
 
 character(len=10) :: LamStr
-character(len=10) :: QStr
+character(len=10) :: QStr, EStr, Astr
 
 
         if (KeplerianPeriod .EQ. 0.0_dp) then
@@ -33,16 +33,19 @@ semi_latus = semi_major * (1.0_dp - eccentricity**2.0_dp)
 ra = semi_latus/(1.0_dp - eccentricity)
 rp = semi_latus/(1.0_dp + eccentricity)
 
+print *, 'PERIAPSIS = ', rp
 
 
 !Declare savefiles
 write(LamStr,'(F10.2)') lambda
 write(QStr,'(F10.2)') epsQ
+write(EStr,'(F10.2)') eccentricity
+write(AStr,'(F10.2)') a
 
 call get_environment_variable("QuadDir", PathOut)
 
 
-Fname = 'data_lambda='//trim(adjustl(LamStr))//'_epsQ='//trim(adjustl(Qstr))
+Fname = 'data_lambda='//trim(adjustl(LamStr))//'_epsQ='//trim(adjustl(Qstr))//'_ecc='//trim(adjustl(EStr))//'_a='//trim(adjustl(AStr))
 BinaryData = trim(adjustl(PathOut))//&
              trim(adjustl(Fname))//&
              '.dat'
@@ -50,6 +53,12 @@ BinaryData = trim(adjustl(PathOut))//&
 PlotData = trim(adjustl(PathOut))//&
              trim(adjustl(Fname))//&
              '.txt'
+
+RoemerData = trim(adjustl(PathOut))//&
+             'PaperData/EinsteinDelay/diffs/'//trim(adjustl(Fname))//'.txt'
+
+
+
 
 
 end subroutine setup
@@ -134,7 +143,7 @@ endif
 
 
 PVector(1) = m0 * ut
-PVector(2) = m0*sqrt(ur) 
+PVector(2) = - m0*sqrt(ur)  !made this negative
 PVector(3) = 0.0_dp
 PVector(4) = m0*uphi
 
