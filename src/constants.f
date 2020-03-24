@@ -12,7 +12,6 @@ implicit none
 real(kind=dp), parameter :: Newton_g = 6.67408d-11 
 real(kind=dp), parameter :: Msolar = 1.989d30 
 real(kind=dp), parameter :: mu = Newton_g*MBH*Msolar
-real(kind=dp), parameter :: PI = 4.D0*ATAN(1.D0) 
 real(kind=dp), parameter :: light_c = 3.0d8
 real(kind=dp), parameter :: convert_m = light_c**2/(Newton_g*MBH*Msolar) !Multiply by this to go TO Natural units
 real(kind=dp), parameter :: convert_s = light_c**3/(Newton_g*MBH*Msolar) !Multiply by this to go TO Natural units
@@ -21,34 +20,28 @@ real(kind=dp), parameter :: convert_spin= light_c/(Newton_g*(MBH*Msolar)**2.0_dp
 
 
 
-
-!New constants for code restructure
-
-
-real(kind=dp) :: KeplerianPeriod, KeplerianPeriodSeconds, SM3, eccentricity, a
-real(kind=dp) :: ObsTheta, ObsPhi, ObsX, ObsY, ObsZ 
-integer(kind=dp) :: nsteps
-!END
+!Some calculations based on parameters input
+real(kind=dp), parameter :: semi_latus = semi_major *(1.0_dp-eccentricity**2.0_dp)
+real(kind=dp), parameter :: ra = semi_latus/(1.0_dp - eccentricity) 
+real(kind=dp), parameter :: rp = semi_latus/(1.0_dp + eccentricity) 
 
 
-real(kind=dp) :: epsQ != 0.100000000_dp !BH quadrupole moment
 
 
+
+
+!Constants which are declared globally and calculated later
+real(kind=dp) :: ObsTheta, ObsPhi, ObsX, ObsY, ObsZ  !Observer location
+real(kind=dp) :: epsQ !BH quadrupole moment
+real(kind=dp) :: lambda !Turn on/off spin-curvature coupling (1 = on)
+real(kind=dp) :: p0
 
 
 !Convert some stuff from parameters to a more usable form (c.f. units)
 !Physical constants
 
-!real(kind=dp), parameter :: KeplerianPeriodSeconds = KeplerianPeriod*365.0_dp*24.0_dp*3600.0_dp
-!real(kind=dp), parameter :: SM3 =(mu*KeplerianPeriodSeconds**2.0_dp)/(4.0_dp * PI**2.0_dp)
-
-real(kind=dp) :: semi_major, semi_latus, ra,rp !These are declared later in setup.
 
 
-!Semi_major axis in natural units
-!real(kind=dp), parameter :: semi_latus = semi_major *(1.0_dp-eccentricity**2.0_dp)
-!real(kind=dp), parameter :: ra = semi_latus/(1.0_dp - eccentricity) 
-!real(kind=dp), parameter :: rp = semi_latus/(1.0_dp + eccentricity) 
 
 
 
@@ -70,8 +63,10 @@ real(kind=dp), parameter :: phi_init = 0.0_dp !initial conditions
 real(kind=dp), parameter :: t_init = 0.0_dp !initial conditions_
 real(kind=dp), parameter :: zMinus = cos(theta_min)**2.0_dp
 real(kind=dp), parameter :: inertia = 0.40_dp*(MPSR*Msolar)*(RPSR*1.0d3)**2.0_dp !SI units
-real(kind=dp), parameter :: s0 = convert_spin*2.0_dp*PI*inertia/p0 !magnitude of spin spatial vector in natural units
-real(kind=dp), parameter :: stheta = PI/4.0_dp, sphi = PI/4.0_dp !alignment of spin axis in tetrad frame
+real(kind=dp) :: s0  !=  convert_spin*2.0_dp*PI*inertia/p0 !magnitude of spin spatial vector in natural units
+!real(kind=dp), parameter :: s0 = 0.0_dp !convert_spin*2.0_dp*PI*inertia/p0 !magnitude of spin spatial vector in natural units
+
+
 real(kind=dp), parameter :: m0 = MPSR/MBH !Mass ratio
 integer(kind=dp), parameter :: entries = 12 !Number of differetnai eqns 4x(position,spin,momentum)
 real(kind=dp), parameter :: FinalPhi = 2.0_dp*PI*N_orbit !The final phi after all the orbits
@@ -91,7 +86,7 @@ integer(kind=dp), parameter :: nrows = 1d6
 character(len=200) :: PathOut,BinaryData, PlotData,Fname,RoemerData !Decalared later - cross compliatin issue from parameter.f
 real(kind=dp), parameter :: coarse = 1.0_dp !how much of total data is saved to formatted file 1 = lots, +infty = none
 
-
+character(len=200) :: TimeFile, SpinFile, FileID
 
 
 

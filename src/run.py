@@ -1,17 +1,15 @@
 from os import system as os
 import sys
 
+#Clear data directory
+os('rm /Users/tomkimpson/Data/Quadrupole/*.txt')
 
 
-print ('Starting compilation')
-
-settings = ' -ffree-form -ffree-line-length-0 -fdefault-real-8 -O3 '
-
-
-#You will obviouslyneed to compile QuadExpressions once. After that comment out for speed up
-
+#Specify compilation settings
+settings = ' -ffree-form -ffree-line-length-0 -fdefault-real-8 -O3 -Wunused-label '
 
 #Compile all modules
+#Can comment out QuadExpressions compilation when its been done once
 os("gfortran -J mod/ -c"+settings+"parameters.f -o mod/1.o") 
 os("gfortran -J mod/ -c"+settings+"constants.f -o mod/2.o") 
 #os("gfortran -J mod/ -c"+settings+"QuadExpressions.f -o mod/3.o") 
@@ -24,6 +22,7 @@ os("gfortran -J mod/ -c"+settings+"main.f -o mod/8.o")
 
 
 #Link all modules
+print ('Starting compilation')
 os("gfortran mod/*.o -o GO")
 
 

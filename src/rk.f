@@ -14,12 +14,11 @@ public rk
 contains
 
 
-subroutine rk(y0,roemer_array)
+subroutine rk(y0)
 
  
 !Arguments
 real(kind=dp),intent(IN),dimension(entries) :: y0 !initial conditions
-real(kind=dp),intent(OUT),dimension(nsteps) :: roemer_array !initial conditions
 
 !Other
 real(kind=dp), dimension(size(y0)) :: y, y1,dy
@@ -30,8 +29,8 @@ real(kind=dp), dimension(nrows,size(y0)+2) :: AllData !Big array to save all dat
 real(kind=dp), dimension(:,:),allocatable :: output !smaller array which will be outout
 integer(kind=dp) :: i,j !,nsteps !index for saving to array
 real(kind=dp) :: mm, xC, yC, zC !Cartesian components
-real(kind=dp), dimension(:), allocatable :: r,theta,phi,S1,S2,S3,Sx,Sy,Sz, thetaSL, phiSL
-real(kind=dp) :: tau, roemer
+real(kind=dp) :: tau, roemer 
+real(kind=dp) :: r,theta,phi,S1,S2,S3,Sx,Sy,Sz, thetaSL, phiSL
 
 
 y  = y0
@@ -52,15 +51,7 @@ AllData(i,14) = dy(1)
 
 
 !Integrate
-!
-!do while (i .LT. 5)
-!do while ( abs( y(4) - y0(4)) .LT. N_orbit*2.0_dp*PI)    
-!print *, abs( y(4) - y0(4)) , N_orbit*2.0_dp*PI
-
-do while (tau .LT. N_orbit*KeplerianPeriodSeconds*convert_s)
-!do while (i .LT. nsteps)
-!do while (y(2) .LT. 1.010_dp*r_init)
-
+do while ( abs( y(4) - y0(4)) .LT. N_orbit*2.0_dp*PI)    
     call RKF(y,y1)
     y = y1
     
@@ -108,7 +99,46 @@ output = AllData(1:i, :)
 
 
 
-print *, 'Nsteps = ', i, int(N_orbit*KeplerianPeriodSeconds*convert_s/h), h
+!Spatial
+
+
+
+!Time
+print *, 'Writing Time'
+open(unit=30,file=TimeFile,status='replace',form='formatted')
+do j=1,i
+write(30,*) output(j,13), output(j,1), output(j,14), output(j,4)
+enddo
+
+close(30)
+
+
+!Spin
+print *, 'Writing Spin'
+open(unit=40,file=SpinFile,status='replace',form='formatted')
+do j=1,i
+
+    !This should be vectorised for speed
+    r = output(j,2) ; theta = output(j,3) ; phi = output(j,4)
+    s1 = output(j,10) ; s2 = output(j,11) ; s3 = output(j,12)
+
+    tau = output(j,13)
+
+    Sx = s1*sin(theta)*cos(phi) + s2*r*cos(theta)*cos(phi) - s3*r*sin(theta)*sin(phi)
+    Sy = s1*sin(theta)*sin(phi) + s2*r*cos(theta)*sin(phi) + s3*r*sin(theta)*cos(phi)
+    Sz = s1*cos(theta) - s2*r*sin(theta)
+
+
+    thetaSL = atan2(sqrt(Sx**2 + Sy**2),Sz)
+    phiSL = atan2(Sy,Sx)
+
+    write(40,*) tau/convert_s, phi, thetaSL, phiSL, output(j,9) 
+
+enddo
+
+
+
+
 
 
 
@@ -118,30 +148,24 @@ if (plot .EQ. 1) then
 !Save formatted data for plotting
     open(unit=20,file=PlotData,status='replace',form='formatted')
     do j = 1,i
-    if (mod(real(j), coarse) .EQ. 0.0_dp) then
-    mm = sqrt(output(j,2)**2 + a**2)
-    xC = mm * sin(output(j,3)) * cos(output(j,4))
-    yC = mm * sin(output(j,3)) * sin(output(j,4))
-    zC = mm * cos(output(j,3)) 
+        if (mod(real(j), coarse) .EQ. 0.0_dp) then
+        mm = sqrt(output(j,2)**2 + a**2)
+        xC = mm * sin(output(j,3)) * cos(output(j,4))
+        yC = mm * sin(output(j,3)) * sin(output(j,4))
+        zC = mm * cos(output(j,3)) 
     
 
-    !Calculate the Roemer delay
-
-    !roemer = (ObsX*xC + ObsY*yC + ObsZ*zC) / convert_s   
-    !roemer_array(j) = roemer
-
-    !Repurposing roemer to be Einstein delay
-
-    roemer_array(j) = output(j,14)
 
 
+        write(20, *) output(j,1), xC, yC, zC,&!t,x,y,z
+                     output(j,2), output(j,3),output(j,4),& !r,theta,phi
+                     output(j,5), & !p0 i.e. time component of momentum
+                     output(j,9), output(j,10),output(j,11), output(j,12), & !spin
+                     output(j,13) !tau
 
+        endif 
+    
 
-    write(20, *) output(j,1), xC, yC, zC , & !t,x,y,z
-                 output(j,2), output(j,3), output(j,4), & !r,theta,phi 
-                 output(j,10),output(j,11),output(j,12), & !s1,s2,s3
-                 output(j,13),roemer,output(j,14) !tau, roemer,dt,dtau
-    endif 
     enddo
     close(20)
 
@@ -150,10 +174,6 @@ if (plot .EQ. 1) then
 endif
 
 
-
-!Closing messages
-!print *, 'Data saved to ', trim(adjustl(BinaryData))
-!print *, 'Estimated file size is: ', real(i)*real(entries)*real(dp)/1.0d6, ' MB'
 
 
 end subroutine rk

@@ -21,19 +21,23 @@ character(len=10) :: LamStr
 character(len=10) :: QStr, EStr, Astr
 
 
-        if (KeplerianPeriod .EQ. 0.0_dp) then
-        semi_major = r_set
-        else
-        semi_major = convert_m*SM3**(1.0_dp/3.0_dp)
-        endif
+print *, 'System Info----- '
 
 
 
-semi_latus = semi_major * (1.0_dp - eccentricity**2.0_dp)
-ra = semi_latus/(1.0_dp - eccentricity)
-rp = semi_latus/(1.0_dp + eccentricity)
+if (adaptive .EQ. 0) then
+print *, 'Adaptive stepsize is off, with h = ', h
+else
+print *, 'Adaptive stepsize is on' 
+endif
 
-print *, 'PERIAPSIS = ', rp
+
+print *, 'SMA = ', semi_major
+print *, 'Eccentricity = ', eccentricity
+
+
+
+
 
 
 !Declare savefiles
@@ -44,8 +48,10 @@ write(AStr,'(F10.2)') a
 
 call get_environment_variable("QuadDir", PathOut)
 
+Fname = 'data_eps='//trim(adjustl(QStr))//'lambda='//trim(adjustl(LamStr))
 
-Fname = 'data_lambda='//trim(adjustl(LamStr))//'_epsQ='//trim(adjustl(Qstr))//'_ecc='//trim(adjustl(EStr))//'_a='//trim(adjustl(AStr))
+
+!Fname = 'data_lambda='//trim(adjustl(LamStr))//'_epsQ='//trim(adjustl(Qstr))//'_ecc='//trim(adjustl(EStr))//'_a='//trim(adjustl(AStr))
 BinaryData = trim(adjustl(PathOut))//&
              trim(adjustl(Fname))//&
              '.dat'
@@ -54,8 +60,16 @@ PlotData = trim(adjustl(PathOut))//&
              trim(adjustl(Fname))//&
              '.txt'
 
-RoemerData = trim(adjustl(PathOut))//&
-             'PaperData/EinsteinDelay/diffs/'//trim(adjustl(Fname))//'.txt'
+
+TimeFile = trim(adjustl(PathOut))//&
+           'V2/TimeEvolution/'//&
+           trim(adjustl(Fname))//'.txt'
+
+
+
+SpinFile = trim(adjustl(PathOut))//&
+           'V2/SpinEvolution/'//&
+           trim(adjustl(FileID))//'.txt'
 
 
 

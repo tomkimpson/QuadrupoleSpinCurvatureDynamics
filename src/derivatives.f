@@ -144,25 +144,38 @@ errmax = escal * maxval(ratio)
 
 
 
-
-!TURNING OFF ADAPTIVE STEPSIZE
-
+if (adaptive .EQ. 1) then
 
 
-!if (errmax .GT. 1.0_dp) then
+if (errmax .GT. 1.0_dp) then
 !This is not good. Do not update yOUT and reduce the stepsize
-!call ShrinkStepsize(errmax)
-!yOUT = yIN
-!goto 11
-!else
+call ShrinkStepsize(errmax)
+yOUT = yIN
+goto 11
+else
 !This is good. Update yOUT and try to increase the stepsize a little bit
-!call GrowStepsize(errmax)
-!yOUT = ynew
-!endif
-
-
-!THIS BIT IS NEW
+call GrowStepsize(errmax)
 yOUT = ynew
+endif
+
+
+
+else
+
+
+!Just always update steps
+
+yOUT = ynew
+
+endif
+
+
+
+
+
+
+
+
 
 end subroutine RKF
 
