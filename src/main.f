@@ -13,7 +13,6 @@ real(kind=dp), dimension(3) :: e_array, a_array
 real(kind=dp), dimension(:), allocatable :: EinsteinDifference
 
 
-
 !Set the observer
 ObsTheta = PI/4.0_dp
 ObsPhi = 0.0_dp
@@ -39,11 +38,37 @@ ObsZ = cos(ObsTheta)
 h = 5.00_dp 
 
 
+
+!Galactic Centre
+h = 80.0_dp !for GC, r = 830
+!h = 50.0_dp !for GC, r=520
+!h = 15.0_dp !for GC, r=178
+h=10.0_dp
+
+
+!h = 1.0_dp
+!Globular Clusters
+
+
+PeriodEst = 2.0_dp * PI * semi_major**(3.0_dp / 2.0_dp) 
+
+
+
+print *, 'Estimated Orbital Period = ', PeriodEst/convert_s, ' seconds'
+print *, 'Estimated Orbital Period = ', PeriodEst/(convert_s*3600.0_dp * 24.0_dp), ' days'
+print *, 'Estimated Orbital Period = ', PeriodEst/(convert_s*3600.0_dp * 24.0_dp*365.0_dp), ' years'
+
+
+
+print *, 'Convert_s =', convert_s
+
+
+
 !Run A
 FileID = 'A'
 p0 = 1e-3
 lambda=1.0_dp
-epsQ = 0.10_dp
+epsQ = 0.010_dp
 s0 = convert_spin*2.0_dp*PI*inertia/p0
 
 call run()
@@ -52,7 +77,7 @@ call run()
 FileID = 'B'
 p0 = 1e10 !Some very slow spinner
 lambda=0.0_dp
-epsQ = 0.10_dp
+epsQ = 0.010_dp
 s0 = convert_spin*2.0_dp*PI*inertia/p0
 call run()
 

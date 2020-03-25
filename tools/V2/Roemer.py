@@ -7,7 +7,7 @@ import matplotlib.gridspec as gridspec
 from mpl_toolkits.mplot3d import Axes3D
 import os
 from scipy.signal import argrelextrema
-
+from scipy import interpolate
 
 
 #Setup plotting environment
@@ -16,36 +16,46 @@ fig, (ax1,ax2,ax3) =plt.subplots(3, 1, sharex=True, figsize=(10,10))
 
 
 
+#Set observer location
+ObsTheta = np.pi/4
+ObsPhi = 0.0
+ObsX = np.sin(ObsTheta)*np.cos(ObsPhi)
+ObsY = np.sin(ObsTheta)*np.sin(ObsPhi)
+ObsZ = np.cos(ObsTheta)
 
-#Do you want to look at theta_spin or phi_spin
-idx = 3 #2 = theta, 3=phi
+
+#convert time
+convert_s = 0.203393735668199405699775876374792498
+convert_s = 4.71911219647794444779062358178172841E-0002 #Sgr A*
+convert_s = 203.393735668199405699775876374792498 #GlobClus
 
 
-#Normalisataion factors
+#set what you want the x-axis to be
 
-if idx == 3:
-    factorAB = 1e5
-    factorAC = 1e3
-if idx == 2:
-    factorAB = 1e5
-    factorAC = 1e4
-#Set path to files
 
+#paths to dirs
 root = os.environ['QuadDir']
-path = 'V2/SpinEvolution/'
-path = 'V2/SpinEvolution/M6/'
-spin = 'a+06/'
+path = 'V2/Roemer/SgrA*/'
 def get_data(f):
 
     data = np.loadtxt(f)
     
-    tau = data[:,0]
-    phi = data[:,1]
-    y = data[:,idx]
-    #y = data[:,4]
+    t = data[:,0] #tau / P
+    x = data[:,1]
+    y = data[:,2]
+    z = data[:,3]
+    phi = data[:,4]
+    
 
-    return tau, y
+    roemer = x*ObsX + y*ObsY + z*ObsZ
+    
 
+    return t, roemer/convert_s
+
+
+
+
+    #return t/(convert_s), roemer/(convert_s) 
 def crop(A,B,L):
     return A[0:L], B[0:L]
 
@@ -67,25 +77,38 @@ def compare(f1,f2,ID):
 
 
 
-
-
     if ID == 'AB':
-        ax1.plot(tau1,y1)
-        ax3.plot(tau1,(y2-y1)*factorAB)
+        ax1.plot(tau1,y1/3600) #hours
+        ax3.plot(tau1,(y2-y1) * 1e6) #microseconds
 
     if ID == 'AC':
-        ax2.plot(tau1,(y2-y1)*factorAC)
+        ax2.plot(tau1,(y2-y1)) #seconds
 
+
+
+
+
+#null plot for color cycle
+for i in range(3):
+    ax1.plot([], [])
+    ax2.plot([], [])
+    ax3.plot([], [])
 
 
 
 #e02
 eStrings = ['e06/', 'e04/', 'e02/']
+pStrings = ['P01/', 'P005/', 'P001/']
 #eStrings = ['e06/']
-for e in eStrings:
-    FileA = root+path+spin+e+'A.txt'
-    FileB = root+path+spin+e+'B.txt'
-    FileC = root+path+spin+e+'C.txt'
+pStrings=['']
+eStrings = ['']
+
+path = 'V2/Roemer/GlobClus/'
+#pStrings = ['']
+for e in pStrings:
+    FileA = root+path+e+'A.txt'
+    FileB = root+path+e+'B.txt'
+    FileC = root+path+e+'C.txt'
     compare(FileA, FileB,'AB') # compare a quasi Kerr ST with/without spin couplings
     compare(FileA, FileC,'AC') #compare a Kerr ST w/ quasi WITH spin couplings
 
@@ -103,19 +126,14 @@ for ax in all_axes:
     
 
 #Label axes
-ax3.set_xlabel(r'$ \tau$ [s]',fontsize=fs)
+ax3.set_xlabel(r'$ \tau / P $',fontsize=fs)
 
 fontsize=fs
 
-if idx == 2:
-    ax1.set_ylabel(r'$\theta_{\rm spin}$',fontsize=fs)
-    ax2.set_ylabel(r'$ \delta_{\epsilon} \theta_{\rm spin} \times 10^4$',fontsize=fs)
-    ax3.set_ylabel(r'$\delta_{\lambda} \theta_{\rm spin} \times 10^5$', fontsize=fs)
+ax1.set_ylabel(r'$\Delta_{\rm R}$ [hr]',fontsize=fs)
+ax2.set_ylabel(r'$ \delta_{\epsilon} \Delta_{\rm R}$ [s]',fontsize=fs)
+ax3.set_ylabel(r'$\delta_{\lambda} \Delta_{\rm R} \, [\mu$s$]$', fontsize=fs)
 
-if idx == 3:
-    ax1.set_ylabel(r'$\phi_{\rm spin}$', fontsize=fs)
-    ax2.set_ylabel(r'$ \delta_{\epsilon} \phi_{\rm spin} \times 10^3$', fontsize=fs)
-    ax3.set_ylabel(r'$\delta_{\lambda} \phi_{\rm spin} \times 10^5$', fontsize=fs)
 
 
 
@@ -125,6 +143,6 @@ plt.setp(ax2.get_xticklabels(),visible=False)
 
 
 savepath = '/Users/tomkimpson/Dropbox/MSSL/Papers/PaperNQuadrupole/figures/'
-#plt.savefig(savepath+'Spin'+str(idx)+'.png', dpi = 300,bbox='tight')
+#plt.savefig(savepath+'Roemer.png', dpi = 300,bbox='tight')
 plt.show()
 

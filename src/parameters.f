@@ -11,15 +11,15 @@ real(kind=dp), parameter :: PI = 4.D0*ATAN(1.D0)
 
 !Orbital parameters
 
-real(kind=dp), parameter :: semi_major = 50.0_dp 
-real(kind=dp), parameter :: eccentricity = 0.20_dp !Orbital eccentricity
+real(kind=dp), parameter :: semi_major = 100.0_dp 
+real(kind=dp), parameter :: eccentricity = 0.10_dp !Orbital eccentricity
 real(kind=dp), parameter :: iota = 0.0_dp !Inclination w.r.t equatorial plane in degrees
 real(kind=dp), parameter :: N_orbit = 5.50_dp !Number of orbits to integrate
 
 
 !BH intrinsic parameters
-real(kind=dp), parameter :: MBH = 1.00d3 !BH mass in solar masses
-real(kind=dp), parameter :: a= 0.60_dp !BH spin parameter
+real(kind=dp), parameter :: MBH = 4.3100d6 !BH mass in solar masses
+real(kind=dp), parameter :: a= +0.90_dp !BH spin parameter
 
 !PSR intrinsic parameters
 real(kind=dp), parameter :: MPSR = 1.40_dp !pulsar mass in solar masses

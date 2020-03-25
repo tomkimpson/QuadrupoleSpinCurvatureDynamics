@@ -31,7 +31,7 @@ integer(kind=dp) :: i,j !,nsteps !index for saving to array
 real(kind=dp) :: mm, xC, yC, zC !Cartesian components
 real(kind=dp) :: tau, roemer 
 real(kind=dp) :: r,theta,phi,S1,S2,S3,Sx,Sy,Sz, thetaSL, phiSL
-
+real(kind=dp) :: time_cutoff
 
 y  = y0
 
@@ -49,12 +49,23 @@ AllData(i,14) = dy(1)
 
 
 
-
+time_cutoff = 2.0_dp*PI*semi_major**(3.0_dp/2.0_dp) * N_orbit
 !Integrate
-do while ( abs( y(4) - y0(4)) .LT. N_orbit*2.0_dp*PI)    
+!do while ( abs( y(4) - y0(4)) .LT. 1.10_dp*N_orbit*2.0_dp*PI)    
+do while ( y(1) .LT. time_cutoff )
+  
+
+    !Update
     call RKF(y,y1)
     y = y1
-    
+ 
+
+
+    !Print statements
+    !print *, y(1), time_cutoff
+
+
+   
     !Save the output
     i = i + 1
     AllData(i,1:12) = y
@@ -138,8 +149,32 @@ enddo
 
 
 
+!Roemer
 
+print *, 'Writing Roemer'
+open(unit=30,file=RoemerFile,status='replace',form='formatted')
+do j=1,i
 
+        tau = output(j,13)
+        mm = sqrt(output(j,2)**2 + a**2)
+        xC = mm * sin(output(j,3)) * cos(output(j,4))
+        yC = mm * sin(output(j,3)) * sin(output(j,4))
+        zC = mm * cos(output(j,3)) 
+
+write(30,*) tau/PeriodEst, xC, yC, zC, output(j,4),tau
+enddo
+
+close(30)
+
+print *, 'Writing Einstein'
+open(unit=40,file=EinsteinFile,status='replace',form='formatted')
+do j=1,i
+
+        tau = output(j,13)
+        write(40,*) tau/PeriodEst, (output(j,1) - tau)/convert_s 
+enddo
+
+close(40)
 
 
 

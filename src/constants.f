@@ -34,7 +34,7 @@ real(kind=dp), parameter :: rp = semi_latus/(1.0_dp + eccentricity)
 real(kind=dp) :: ObsTheta, ObsPhi, ObsX, ObsY, ObsZ  !Observer location
 real(kind=dp) :: epsQ !BH quadrupole moment
 real(kind=dp) :: lambda !Turn on/off spin-curvature coupling (1 = on)
-real(kind=dp) :: p0
+real(kind=dp) :: p0, PeriodEst
 
 
 !Convert some stuff from parameters to a more usable form (c.f. units)
@@ -86,7 +86,7 @@ integer(kind=dp), parameter :: nrows = 1d6
 character(len=200) :: PathOut,BinaryData, PlotData,Fname,RoemerData !Decalared later - cross compliatin issue from parameter.f
 real(kind=dp), parameter :: coarse = 1.0_dp !how much of total data is saved to formatted file 1 = lots, +infty = none
 
-character(len=200) :: TimeFile, SpinFile, FileID
+character(len=200) :: TimeFile, SpinFile, FileID, RoemerFile, EinsteinFile
 
 
 

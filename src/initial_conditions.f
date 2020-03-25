@@ -72,8 +72,14 @@ SpinFile = trim(adjustl(PathOut))//&
            trim(adjustl(FileID))//'.txt'
 
 
+RoemerFile = trim(adjustl(PathOut))//&
+           'V2/Roemer/'//&
+           trim(adjustl(FileID))//'.txt'
 
 
+EinsteinFile = trim(adjustl(PathOut))//&
+           'V2/Einstein/'//&
+           trim(adjustl(FileID))//'.txt'
 
 end subroutine setup
 
