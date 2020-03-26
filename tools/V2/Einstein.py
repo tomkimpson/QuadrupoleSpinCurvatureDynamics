@@ -94,7 +94,7 @@ for i in range(3):
 eStrings = ['e06/', 'e04/', 'e02/']
 pStrings = ['P01/', 'P005/', 'P001/']
 eStrings = ['']
-pStrings = ['']
+#pStrings = ['']
 
 for e in pStrings:
     FileA = root+path+e+'A.txt'
