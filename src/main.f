@@ -64,6 +64,25 @@ print *, 'Convert_s =', convert_s
 
 
 
+!-------testing
+
+!Run A
+FileID = 'A'
+p0 = 1e-3
+lambda=0.0_dp
+epsQ = 0.00_dp
+s0 = convert_spin*2.0_dp*PI*inertia/p0
+call run()
+stop
+
+
+
+
+
+
+
+
+
 !Run A
 FileID = 'A'
 p0 = 1e-3

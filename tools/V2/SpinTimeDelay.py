@@ -7,9 +7,20 @@ import matplotlib.gridspec as gridspec
 from mpl_toolkits.mplot3d import Axes3D
 import os
 from scipy.signal import argrelextrema
-from numpy import cos as Cos
-from numpy import sin as Sin
-from numpy import sqrt as Sqrt
+sys.path.insert(1, '../modules/')
+from CriticalPhaseAngle import CalculateChi
+
+
+
+#from numpy import cos as Cos
+#from numpy import sin as Sin
+#from numpy import sqrt as Sqrt
+
+
+
+
+
+
 
 
 #Setup plotting environment
@@ -27,27 +38,14 @@ ObsZ = np.cos(ObsTheta)
 
 
 
-stheta = 0.0
-sphi = 0.0
-psi = np.pi/4
-chi = np.linspace(-2*np.pi,2*np.pi,100)
-omega = np.arccos((Cos(stheta) + Cos(sphi)*Cos(stheta)*Cos(chi) + Cos(sphi)*Sin(stheta) - Cos(chi)*Sin(stheta) - Sin(sphi)*Sin(chi))/2.)
-
-
-
-#ax1.plot(chi,omega)
-#plt.show()
-#sys.exit()
-
-
 #define the critical angle function
-def CriticalPhase(Ox,Oy,Oz,stheta,sphi):
+#def CriticalPhase(Ox,Oy,Oz,stheta,sphi):
+#
+ #   bottom = Cos(sphi)**2 * Cos(stheta)**2 + Sin(sphi)**2 -2*Cos(sphi)*Cos(stheta)*Sin(stheta) + Sin(stheta)**2
 
-    bottom = Cos(sphi)**2 * Cos(stheta)**2 + Sin(sphi)**2 -2*Cos(sphi)*Cos(stheta)*Sin(stheta) + Sin(stheta)**2
+  #  top = Cos(sphi)*Cos(stheta) - Sin(stheta)
 
-    top = Cos(sphi)*Cos(stheta) + Sin(stheta)
-
-    return np.arccos(top/bottom)
+  #  return np.arccos(top/np.sqrt(bottom))
 
 
 
@@ -76,22 +74,25 @@ def get_data(f):
     stheta = data[:,2]
     sphi = data[:,3]
 
-    stheta = stheta * 0.0
-    sphi = sphi * 0.0
+    #stheta = stheta * 0.0
+    #sphi = sphi * 0.0
 
 
-    Xc = CriticalPhase(ObsX,ObsY,ObsZ,stheta,sphi)
+    Xc = CalculateChi(stheta,sphi)
  
-    print (Xc[0], np.pi/4, 1/np.sqrt(2))
-    sys.exit()
+    #print (Xc[0], np.pi/4, 1/np.sqrt(2))
+    #sys.exit()
 
    
     delta_Xc = Xc-Xc[0]
+
+    print (delta_Xc)
+
     Ps = 1 #milliseconds
     delta_t = Ps *delta_Xc / (2*np.pi)
 
 
-    ax1.plot(tau,Xc)
+    ax1.plot(tau,delta_t)
 
 
 

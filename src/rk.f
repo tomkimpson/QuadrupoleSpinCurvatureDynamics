@@ -3,6 +3,8 @@ module rungekutta
 use parameters
 use constants
 use derivatives
+use analysis
+
 
 implicit none
 
@@ -26,12 +28,21 @@ real(kind=dp), dimension(size(y0)) :: y, y1,dy
 !However this does require more exploration
 !see https://stackoverflow.com/questions/8384406/how-to-increase-array-size-on-the-fly-in-fortran
 real(kind=dp), dimension(nrows,size(y0)+2) :: AllData !Big array to save all data. 12 coordinates + tau + dt/dtau
+real(kind=dp), dimension(nrows,4) :: DerivativesStore !Big array to save all data. 12 coordinates + tau + dt/dtau
 real(kind=dp), dimension(:,:),allocatable :: output !smaller array which will be outout
 integer(kind=dp) :: i,j !,nsteps !index for saving to array
 real(kind=dp) :: mm, xC, yC, zC !Cartesian components
 real(kind=dp) :: tau, roemer 
 real(kind=dp) :: r,theta,phi,S1,S2,S3,Sx,Sy,Sz, thetaSL, phiSL
 real(kind=dp) :: time_cutoff
+real(kind=dp),dimension(4) :: uVector, xVector, vector
+
+
+
+
+
+
+
 
 y  = y0
 
@@ -43,6 +54,9 @@ AllData(i,13) = tau
  
 
 call derivs(y,dy)
+DerivativesStore(i,:) = dy(1:4)
+
+
 AllData(i,14) = dy(1)
 
 
@@ -75,6 +89,19 @@ do while ( y(1) .LT. time_cutoff )
     !And calculate some derivative info - probably not the most effective way to do this
 
     call derivs(y,dy)
+
+    
+    DerivativesStore(i,:) = dy(1:4)
+
+
+    
+    uVector(1:4) = DerivativesStore(i,1:4)
+    xVector(1:4) = AllData(i,1:4)
+    call transform_to_comoving_frame(vector,uVector,xVector)
+    stop
+
+
+
     AllData(i,14) = dy(1)
 
  !   print *, y
@@ -133,8 +160,12 @@ do j=1,i
     r = output(j,2) ; theta = output(j,3) ; phi = output(j,4)
     s1 = output(j,10) ; s2 = output(j,11) ; s3 = output(j,12)
 
+
+    !Proper time
     tau = output(j,13)
 
+
+    !Some calculations with the spin components
     Sx = s1*sin(theta)*cos(phi) + s2*r*cos(theta)*cos(phi) - s3*r*sin(theta)*sin(phi)
     Sy = s1*sin(theta)*sin(phi) + s2*r*cos(theta)*sin(phi) + s3*r*sin(theta)*cos(phi)
     Sz = s1*cos(theta) - s2*r*sin(theta)
@@ -143,7 +174,15 @@ do j=1,i
     thetaSL = atan2(sqrt(Sx**2 + Sy**2),Sz)
     phiSL = atan2(Sy,Sx)
 
-    write(40,*) tau/convert_s, phi, thetaSL, phiSL, output(j,9) 
+
+    !Relativistic aberration
+
+
+
+    write(40,*) tau/convert_s, phi, thetaSL, phiSL, output(j,9), &
+                DerivativesStore(i,1), DerivativesStore(i,2)
+!                DerivativesStore(i,3)
+ !               DerivativesStore(i,4)
 
 enddo
 
