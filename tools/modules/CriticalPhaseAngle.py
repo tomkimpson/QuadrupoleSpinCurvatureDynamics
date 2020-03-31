@@ -8,5 +8,13 @@ from numpy import sqrt as Sqrt
 #Additionally, the observer is taken to be at =  List(1/Sqrt(2),0,1/Sqrt(2))  
                                                                              
 def CalculateChi(stheta, sphi): 
-    output =  ArcCos((Cos(sphi)*Cos(stheta) - Sin(stheta))/Sqrt(Cos(sphi)**2*Cos(stheta)**2 + Sin(sphi)**2 - 2*Cos(sphi)*Cos(stheta)*Sin(stheta) + Sin(stheta)**2))
-    return output
+    top = (-(Cos(sphi)*Cos(stheta)) + Sin(stheta))
+    bot = Sqrt(Cos(sphi)**2*Cos(stheta)**2 + Sin(sphi)**2 + Sin(stheta)**2 - Cos(sphi)*Sin(2*stheta))
+    
+
+
+
+    output = -ArcCos(-top/bot)
+  #  output =  (-ArcCos((-(Cos(sphi)*Cos(stheta)) + Sin(stheta))/Sqrt(Cos(sphi)**2*Cos(stheta)**2 + Sin(sphi)**2 + Sin(stheta)**2 - Cos(sphi)*Sin(2*stheta))))
+    
+    return -top,bot

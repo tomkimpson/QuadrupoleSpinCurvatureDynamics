@@ -40,14 +40,12 @@ h = 5.00_dp
 
 
 !Galactic Centre
-h = 80.0_dp !for GC, r = 830
+!h = 80.0_dp !for GC, r = 830
 !h = 50.0_dp !for GC, r=520
-!h = 15.0_dp !for GC, r=178
-h=10.0_dp
+h = 15.0_dp !for GC, r=178
+!h=10.0_dp
+h = 1.0_dp
 
-
-!h = 1.0_dp
-!Globular Clusters
 
 
 PeriodEst = 2.0_dp * PI * semi_major**(3.0_dp / 2.0_dp) 
@@ -67,13 +65,13 @@ print *, 'Convert_s =', convert_s
 !-------testing
 
 !Run A
-FileID = 'A'
-p0 = 1e-3
-lambda=0.0_dp
-epsQ = 0.00_dp
-s0 = convert_spin*2.0_dp*PI*inertia/p0
-call run()
-stop
+!FileID = 'A'
+!p0 = 1e-3
+!lambda=0.0_dp
+!epsQ = 0.100_dp
+!s0 = convert_spin*2.0_dp*PI*inertia/p0
+!call run()
+!stop
 
 
 
@@ -87,7 +85,7 @@ stop
 FileID = 'A'
 p0 = 1e-3
 lambda=1.0_dp
-epsQ = 0.010_dp
+epsQ = 0.01000_dp
 s0 = convert_spin*2.0_dp*PI*inertia/p0
 
 call run()
@@ -96,7 +94,7 @@ call run()
 FileID = 'B'
 p0 = 1e10 !Some very slow spinner
 lambda=0.0_dp
-epsQ = 0.010_dp
+epsQ = 0.01000_dp
 s0 = convert_spin*2.0_dp*PI*inertia/p0
 call run()
 
@@ -104,7 +102,7 @@ call run()
 
 !Run C
 FileID = 'C'
-p0 = 1e-3 !Some very slow spinner
+p0 = 1e-3 
 lambda=1.0_dp
 epsQ = 0.00_dp
 s0 = convert_spin*2.0_dp*PI*inertia/p0

@@ -13,7 +13,7 @@ from CriticalPhaseAngle import CalculateChi
 
 #Setup plotting environment
 plt.style.use('science')
-fig, (ax1,ax2,ax3) =plt.subplots(3, 1, sharex=True, figsize=(10,10))
+fig, ax1 =plt.subplots(1, 1, sharex=True, figsize=(10,10))
 
 
 root = os.environ['QuadDir']
@@ -31,7 +31,6 @@ def get_data(f):
     sphi = data[:,3]
     Xc = data[:,5]
 
-    #ax1.plot(tau, Xc)
 
     #Calculate the time delay
     delta_Xc = Xc-Xc[0]
@@ -41,42 +40,19 @@ def get_data(f):
     
     delta_t = delta_t * 1e6 #microseconds
 
-    #ax1.plot(tau,Xc)
-    #ax2.plot(tau,sphi)
-    #ax3.plot(tau, delta_t)
-
-    return tau, delta_t
+    ax1.plot(tau,delta_t)
 
 
-def crop(A,B,L):
-    return A[0:L], B[0:L]
-
-def compare(f1,f2,ID):
-
-    x1,y1 = get_data(f1)
-    x2,y2 = get_data(f2)
-
-
-
-
-    if ID == 'AB':
-        ax1.plot(x1,y1)
-        ax3.plot(x1,(y2-y1)*1e3) #ns
-
-    if ID == 'AC':
-        ax2.plot(x1,(y2-y1)*1e3) #ns
 
 
 
 eStrings = ['e06/','e07/','e08/', 'e09/']
+#eStrings = ['e09/']
 for e in eStrings:
-    FileA = root+path+e+'A.txt'
-    FileB = root+path+e+'B.txt'
-    FileC = root+path+e+'C.txt'
-    
+    FileA = root+path+e+'C.txt'
+    get_data(FileA)
 
-    compare(FileA, FileB, 'AB')
-    compare(FileA, FileC, 'AC')
+
 
 #Format
 fs = 20
@@ -90,21 +66,9 @@ for ax in all_axes:
     
 
 
-plt.subplots_adjust(hspace = 0.01)
-plt.setp(ax1.get_xticklabels(),visible=False)
-plt.setp(ax2.get_xticklabels(),visible=False)
 
-
-
-ax3.set_xlabel(r'$ \tau / P $',fontsize=fs)
-
+ax1.set_xlabel(r'$ \tau / P $',fontsize=fs)
 ax1.set_ylabel(r'$\Delta t [\mu s]$',fontsize=fs)
-ax2.set_ylabel(r'$ \delta_{\epsilon} \Delta t$ [ns]',fontsize=fs)
-ax3.set_ylabel(r'$ \delta_{\lambda} \Delta t$ [ns]',fontsize=fs)
-
-
-
-
 
 
 savepath = '/Users/tomkimpson/Dropbox/MSSL/Papers/PaperNQuadrupole/figures/'

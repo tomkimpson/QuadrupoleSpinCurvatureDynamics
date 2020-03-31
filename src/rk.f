@@ -35,8 +35,8 @@ real(kind=dp) :: mm, xC, yC, zC !Cartesian components
 real(kind=dp) :: tau, roemer 
 real(kind=dp) :: r,theta,phi,S1,S2,S3,Sx,Sy,Sz, thetaSL, phiSL
 real(kind=dp) :: time_cutoff
-real(kind=dp),dimension(4) :: uVector, xVector, vector
-
+real(kind=dp),dimension(4) :: uVector, xVector, OVector, OVector_comoving
+real(kind=dp) :: top,bot, critical_phase
 
 
 
@@ -76,7 +76,7 @@ do while ( y(1) .LT. time_cutoff )
 
 
     !Print statements
-    !print *, y(1), time_cutoff
+ !   print *, y(1)/ time_cutoff, h
 
 
    
@@ -95,10 +95,6 @@ do while ( y(1) .LT. time_cutoff )
 
 
     
-    uVector(1:4) = DerivativesStore(i,1:4)
-    xVector(1:4) = AllData(i,1:4)
-    call transform_to_comoving_frame(vector,uVector,xVector)
-    stop
 
 
 
@@ -174,15 +170,28 @@ do j=1,i
     thetaSL = atan2(sqrt(Sx**2 + Sy**2),Sz)
     phiSL = atan2(Sy,Sx)
 
+    !critical phase angle
+    top = cos(phiSL)*cos(thetaSL) - sin(thetaSL)
+    bot = Sqrt(cos(phiSL)**2 * cos(thetaSL)**2 + sin(phiSL)**2 + sin(thetaSL)**2 - cos(phiSL)*sin(2.0_dp*thetaSL))
+    
+    critical_phase=acos(top/bot)
 
     !Relativistic aberration
 
+!    uVector(1:4) = DerivativesStore(j,1:4)
+!    xVector(1:4) = output(j,1:4)
+    
+    !Contravariant components of the observaion vector in the coordinate frame
+!    OVector(1) = 0.0_dp
+!    Ovector(2) = sin(theta)*cos(phi)*ObsX + cos(theta)*ObsZ !r_cpt
+!    OVector(3) = cos(theta)*cos(phi)*ObsX/r - sin(theta)*ObsZ/r !theta cpt
+!    OVector(4) = -sin(phi) / (r*sin(theta)) * ObsX
 
 
-    write(40,*) tau/convert_s, phi, thetaSL, phiSL, output(j,9), &
-                DerivativesStore(i,1), DerivativesStore(i,2)
-!                DerivativesStore(i,3)
- !               DerivativesStore(i,4)
+!    call transform_to_comoving_frame(OVector,uVector,xVector,OVector_comoving)
+
+
+    write(40,*) tau/convert_s, phi, thetaSL, phiSL, output(j,9), critical_phase, tau/PeriodEst
 
 enddo
 

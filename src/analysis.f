@@ -14,17 +14,18 @@ public transform_to_comoving_frame
 contains
 
 
-subroutine transform_to_comoving_frame(vector,u,x)
+subroutine transform_to_comoving_frame(vector,u,x,vector_comoving)
 
 !Arguments
-real(kind=dp), intent(IN), dimension(4) :: vector, u,x !vector, 4-velocity, position
+real(kind=dp), intent(IN), dimension(4) :: vector,u,x !vector, 4-velocity, position
+real(kind=dp), intent(OUT), dimension(4) :: vector_comoving
 
 !Other
-real(kind=dp), dimension(4) :: p_covar, p_contra, p_comoving
+real(kind=dp), dimension(4) :: vector_covar
 real(kind=dp), dimension(4,4) :: metric,metricCONTRA !covariant and contravariant metric components
 real(kind=dp),dimension(4) :: u_covar
 real(kind=dp) :: r, theta,phi,u0,u1,u2,u3,u0_covar,u1_covar,u2_covar,u3_covar
-real(kind=dp) :: delta, grr,gthth, N1, N2, N3
+real(kind=dp) :: delta, grr,gthth, N1, N2, N3, pmag, mag1, mag2
 real(kind=dp), dimension(4,4) :: transformation_matrix_inverse,transformation_matrix
 
 
@@ -36,7 +37,6 @@ call calculate_contravariant_metric(metric, metricCONTRA)
 !Transform the contravariant components of the MSP 4-velocity
 u_covar = MATMUL(metric,u)
 
-!For now assume vector is a CONTRAVARIANT vector?
 
 
 
@@ -50,7 +50,7 @@ grr = metric(2,2) ; gthth = metric(3,3)
 
 
 
-print *, '4 velocity magnitude =', u0*u0_covar + u1*u1_covar + u2*u2_covar + u3*u3_covar
+!print *, '4 velocity magnitude =', u0*u0_covar + u1*u1_covar + u2*u2_covar + u3*u3_covar
 
 !Construct transformation matrix
 delta = r**2 + a**2 - 2.0_dp*r
@@ -106,71 +106,29 @@ transformation_matrix(4,3) = (0.0_dp)/N3
 transformation_matrix(4,4) = (-u0_covar)/N3
 
 
+!Swithc the input vector to covariant form
 
-!Define the observation vector in pherical coordinates
-!coordinate_vector(1) = 1.0_dp !time component
-!coordinate_vector(2) = sin(theta)*cos(phi)*ObsX + cos(theta)*ObsZ !r-cpt
-!coordinate_vector(3) = cos(theta)*cos(phi)*ObsX/r - sin(theta)*ObsZ/r !theta-cpt
-!coordinate_vector(4) = -sin(phi)/(r*sin(theta))*ObsX
+vector_covar = matmul(metric,vector)
 
-!p_contra(1) = 0.0_dp
-!p_contra(2) = 10.0_dp
-!p_contra(3) = 0.0_dp
-!p_contra(4) = 0.0_dp
-
-
-!p_covar(1) = 0.0_dp
-!p_covar(2) = grr * p_contra(2)
-!p_covar(3) = 0.0_dp
-!p_covar(4) = 0.0_dp
-
-
-!print *, 'grr = ', grr
-!print *, p_contra(1)*p_covar(1) + p_contra(2)*p_covar(2) + p_contra(3)*p_covar(3) + p_contra(4)*p_covar(4)
-
-p_contra(1) = 1.0_dp
-p_contra(2) = sin(theta)*cos(phi)*ObsX + cos(theta)*ObsZ !r_cpt
-p_contra(3) = cos(theta)*cos(phi)*ObsX/r - sin(theta)*ObsZ/r !theta cpt
-p_contra(4) = -sin(phi) / (r*sin(theta)) * ObsX
+!Get the magnitude before the transform
+mag1 = vector(1)*vector_covar(1) + vector(2)*vector_covar(2) + vector(3)*vector_covar(3) + vector(4)*vector_covar(4)
+!print *, pmag
 
 
 
-p_covar = matmul(metric,p_contra)
+!Perform the transformation of the p vector
+vector_comoving = matmul(transformation_matrix_inverse,vector)
+
+!Get the magnitude after the transform - should be the same
+mag2 = -vector_comoving(1)**2 + vector_comoving(2)**2 + vector_comoving(3)**2 + vector_comoving(4)**2
 
 
-print *, p_contra(1)*p_covar(1) + p_contra(2)*p_covar(2) + p_contra(3)*p_covar(3) + p_contra(4)*p_covar(4)
-
-
-
-
-
-p_comoving = matmul(transformation_matrix_inverse,p_contra)
-!print *, p_comoving
-print *, -p_comoving(1)**2 + p_comoving(2)**2 + p_comoving(3)**2 + p_comoving(4)**2
-
-stop
-
-
-
-print *, 1.0_dp, ObsX, ObsY, ObsZ
-
-!Transform it to the comoving frame
-
-!vector2 = matmul(transformation_matrix_inverse, coordinate_vector)
-
-!print *, vector2
-
-!print *, 'Mag = ', -vector2(1)**2 + vector2(2)**2 + vector2(3)**2 + vector2(4)**2
-
-
+!print *, mag1
+!print *, mag2
+!stop
 
 
 end subroutine transform_to_comoving_frame
-
-
-
-
-
 
 
 
